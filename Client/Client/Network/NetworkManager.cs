@@ -148,7 +148,7 @@ namespace LittleSheep
 
         /// <summary>
         /// 需要高频更新的一些内容
-        /// 需要在某个Unity脚本的Update()方法里调用
+        /// 需要在某个while(true)里调用
         /// </summary>
         public static void Update()
         {

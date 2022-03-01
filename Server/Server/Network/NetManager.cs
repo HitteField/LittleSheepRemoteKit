@@ -205,9 +205,12 @@ namespace LittleSheep
             //然后把发送此协议的Client的State与协议对象本身作为此静态方法的参数传递，Invoke此静态方法
             MethodInfo mi = typeof(MsgHandler).GetMethod(protoName);
             object[] ob = { state, msgBase };
-            if (protoName != "MsgPing") DebugKit.Log("Receive " + protoName + " from client " + state.remoteName + ".");
-            if (mi != null) mi.Invoke(null, ob);
-            else DebugKit.Warning("Receive unknow msg " + protoName + " from client " + state.remoteName + ".");
+            if (protoName != "MsgPing") 
+                DebugKit.Log("Receive " + protoName + " from client " + state.remoteName + ".");
+            if (mi != null) 
+                mi.Invoke(null, ob);
+            else 
+                DebugKit.Warning("Receive unknow msg " + protoName + " from client " + state.remoteName + ".");
 
             //继续读取消息
             if (readBuff.Length > 2) OnReceiveData(state);

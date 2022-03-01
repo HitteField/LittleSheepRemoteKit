@@ -38,7 +38,8 @@ namespace LittleSheep
         public static MsgBase Decode(string protoName, byte[] bytes, int offset, int count)
         {
             string s = System.Text.Encoding.UTF8.GetString(bytes, offset, count);
-            MsgBase msgBase = (MsgBase)JsonConvert.DeserializeObject(s, Type.GetType(protoName));
+            string fullProtoName = "LittleSheep." + protoName;
+            MsgBase msgBase = (MsgBase)JsonConvert.DeserializeObject(s, Type.GetType(fullProtoName));
 
             return msgBase;
         }
