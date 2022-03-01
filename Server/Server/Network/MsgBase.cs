@@ -44,7 +44,7 @@ namespace LittleSheep
         }
 
         /// <summary>
-        /// 编码协议名（2字节长度+字符串）
+        /// 编码协议名（2字节长度(0:商，1:余数)+字符串）
         /// </summary>
         /// <param name="msgBase">协议类</param>
         /// <returns></returns>

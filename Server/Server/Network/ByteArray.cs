@@ -119,7 +119,7 @@ namespace LittleSheep
         }
 
         /// <summary>
-        /// 从缓冲区的readIdxOffset处开始读取4字节的Int16值
+        /// 从缓冲区的readIdxOffset处开始读取4字节的Int32值
         /// </summary>
         /// <param name="readIdxOffset">在缓冲区中的偏移量</param>
         /// <returns>读取的Int32的值</returns>

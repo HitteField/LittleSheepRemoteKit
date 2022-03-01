@@ -41,7 +41,7 @@ namespace LittleSheep
             //Listen
             listenfd.Listen(0);
 
-            DebugKit.Log("Server started up suuccessfully.");
+            DebugKit.Log("Server started up successfully.");
 
             while (true)
             {

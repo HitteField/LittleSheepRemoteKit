@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "sU9BoW2xgXIkhd7ofEBA4vB+axHW/kkTnFKEZyoZdEfG6mfMGExwQJVFfZtzTkJydUSVzRZBfCAqh/0kxmjgVw==",
+  "dgSpecHash": "LlZNbJsu7n7kp/7wwBP/+0EQKoy3GojIRV5MNtI1KqSWDS6fo8XS3SLAFuIsZbO8/U8rKhgCCrAdL5gZkmn0mg==",
   "success": true,
-  "projectFilePath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Server\\Server.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "E:\\Users\\Destiny\\Desktop\\LittleSheep\\GitHub\\Server\\Server.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Destiny\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512",
+    "C:\\Users\\Destiny\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\5.0.13\\microsoft.netcore.app.host.win-x64.5.0.13.nupkg.sha512"
+  ],
   "logs": []
 }
