@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qGRsgoU4VwmF7dW7Kh9g7rP2Uvs2RgJUNsgdn+jKbcX+8HGyrHfSpztXpER8FLxwjIa1edcOePB0KPXXuTZUsg==",
+  "dgSpecHash": "sU9BoW2xgXIkhd7ofEBA4vB+axHW/kkTnFKEZyoZdEfG6mfMGExwQJVFfZtzTkJydUSVzRZBfCAqh/0kxmjgVw==",
   "success": true,
-  "projectFilePath": "D:\\Code\\Project\\LittleSheepRemoteKits\\Server\\Server.csproj",
+  "projectFilePath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Server\\Server.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

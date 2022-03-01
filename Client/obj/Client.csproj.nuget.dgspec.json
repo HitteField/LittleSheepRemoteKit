@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Code\\Project\\LittleSheepRemoteKits\\Client\\Client.csproj": {}
+    "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj": {}
   },
   "projects": {
-    "D:\\Code\\Project\\LittleSheepRemoteKits\\Client\\Client.csproj": {
+    "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Code\\Project\\LittleSheepRemoteKits\\Client\\Client.csproj",
+        "projectUniqueName": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj",
         "projectName": "Client",
-        "projectPath": "D:\\Code\\Project\\LittleSheepRemoteKits\\Client\\Client.csproj",
+        "projectPath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj",
         "packagesPath": "C:\\Users\\Lantyais\\.nuget\\packages\\",
-        "outputPath": "D:\\Code\\Project\\LittleSheepRemoteKits\\Client\\obj\\",
+        "outputPath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "E:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
