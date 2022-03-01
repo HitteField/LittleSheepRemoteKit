@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using LittleSheep;
 
 namespace Client
 {
@@ -23,6 +25,19 @@ namespace Client
         public MainWindow()
         {
             InitializeComponent();
+
+            Thread netConnection = new Thread(NetConnection);
+            netConnection.Start();
+        }
+
+        public void NetConnection()
+        {
+            NetManager.Connect(NetManager.ConnectMethod.IPaddress, "127.0.0.1", 8888);
+            while(true)
+            {
+                Thread.Sleep(2);
+                NetManager.Update();
+            }
         }
     }
 }

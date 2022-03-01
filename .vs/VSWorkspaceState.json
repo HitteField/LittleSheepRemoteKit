@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\Client",
+    "\\Client\\Client",
+    "\\Client\\Client\\Network",
+    "\\Client\\Client\\Network\\Proto",
+    "\\Client\\Client\\Utlities",
+    "\\Server\\Server",
+    "\\Server\\Server\\Network",
+    "\\Server\\Server\\Utlities"
+  ],
+  "SelectedNode": "\\Client\\Client\\Network\\Proto\\connectMsg.cs",
+  "PreviewInSolutionExplorer": false
+}
