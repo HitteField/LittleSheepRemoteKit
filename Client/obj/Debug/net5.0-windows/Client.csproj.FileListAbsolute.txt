@@ -1,0 +1,5 @@
+D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net5.0-windows\Client.csprojAssemblyReference.cache
+D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net5.0-windows\MainWindow.g.cs
+D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net5.0-windows\App.g.cs
+D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net5.0-windows\Client_MarkupCompile.cache
+D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net5.0-windows\Client_MarkupCompile.lref

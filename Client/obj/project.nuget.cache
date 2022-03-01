@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "6W7gDj9E16gkmq1HaCr2ZqQuDEigYjmgVk7AGNj0EX8UOkHLtbkw6ESQG67mbedq2LzvScf0dl0wwZ8T5X47Og==",
+  "dgSpecHash": "nhDFwLsi+34WsSRVO+2rFnhLLn3fplnd+SwXskhLd7fdKGw6ladsR+s8acigrIeZctgTwZyBtLhWStcogHx7ew==",
   "success": true,
   "projectFilePath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Lantyais\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512"
+  ],
   "logs": []
 }
