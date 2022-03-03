@@ -2,8 +2,9 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net46</TargetFramework>
     <UseWPF>true</UseWPF>
+    <RootNamespace>LittleSheep</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
