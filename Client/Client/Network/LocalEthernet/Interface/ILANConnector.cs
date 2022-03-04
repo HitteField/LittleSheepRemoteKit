@@ -13,38 +13,52 @@ namespace LittleSheep
     interface ILANConnector
     {
         /// <summary>
-        /// 目标设备套接字
+        /// 接收广播套接字
         /// </summary>
-        Socket Clientfd
-        {
-            get;
-        }
-        
+        UdpClient BoardcastRecvfd { get; }
+        /// <summary>
+        /// 广播套接字
+        /// </summary>
+        UdpClient Boardcastfd { get; }
+
+
         /// <summary>
         /// 初始化LAN连接模块
         /// </summary>
         /// <returns>初始化结果</returns>
         bool Initialization();
         /// <summary>
+        /// 初始化LAN广播模块
+        /// </summary>
+        /// <returns></returns>
+        bool InitializationBoardcast();
+        /// <summary>
         /// 广播一条消息
         /// </summary>
         /// <param name="msg"></param>
         /// <returns>广播成功与否</returns>
-        bool BoradcastMsg(MsgBase msg);
+        bool BoardcastMsg(MsgBase msg);
         /// <summary>
-        /// 发送一条消息
+        /// 收到广播消息
         /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="msg"></param>
-        /// <returns>发送成功与否</returns>
-        bool SendMsg(Socket socket, MsgBase msg);
+        /// <param name="ar"></param>
+        void BoardcastReceive();
         /// <summary>
-        /// 开始接收报文
+        /// 收到单播消息
         /// </summary>
-        void StartReceive(int port);
+        void UnicastReceive();
+
+        #region 具体连接步骤
         /// <summary>
-        /// 关闭接收报文
+        /// 发送广播探查报文
         /// </summary>
-        void HaltReceive();
+        /// <returns></returns>
+        bool LANProbeRequest();
+        /// <summary>
+        /// 发送单播连接请求报文
+        /// </summary>
+        /// <returns></returns>
+        bool LANConnectRequest();
+        #endregion
     }
 }

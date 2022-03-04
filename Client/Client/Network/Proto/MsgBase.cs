@@ -83,5 +83,58 @@ namespace LittleSheep
             string name = System.Text.Encoding.UTF8.GetString(bytes, offset + 2, len);
             return name;
         }
+
+        /// <summary>
+        /// 将消息体直接封装成可以发送的JSON报文
+        /// </summary>
+        /// <param name="msg">消息体</param>
+        /// <returns>编码完成的报文</returns>
+        public static byte[] EncodeToSendBytes(MsgBase msg)
+        {
+            //数据编码
+            byte[] nameBytes = MsgBase.EncodeName(msg);
+            byte[] bodyBytes = MsgBase.Encode(msg);
+
+            int len = nameBytes.Length + bodyBytes.Length;          //总长度
+            byte[] sendBytes = new byte[2 + len];                   //前面还有2字节的消息总长度
+
+            //组装
+            sendBytes[0] = (byte)(len % 256);
+            sendBytes[1] = (byte)(len / 256);
+
+            Array.Copy(nameBytes, 0, sendBytes, 2, nameBytes.Length);                           //拷贝协议名部分
+            Array.Copy(bodyBytes, 0, sendBytes, 2 + nameBytes.Length, bodyBytes.Length);        //拷贝协议体部分
+            return sendBytes;
+        }
+
+        /// <summary>
+        /// 从一个完整的报文中解码出消息体
+        /// </summary>
+        /// <param name="bytes">完整的报文</param>
+        /// <returns>解码出的消息体</returns>
+        public static MsgBase DecodeFromRecvBytes(byte[] bytes)
+        {
+
+            int readIdx = 0;
+            Int16 bodyLength = (Int16)((bytes[readIdx + 1] << 8) | bytes[readIdx]);
+            if (bytes.Length < bodyLength + 2) return null;       //此消息没接收完全
+
+            readIdx += 2;
+            //解析协议名
+            int nameCount;
+            string msgProtoName = MsgBase.DecodeName(bytes, readIdx, out nameCount);
+
+            if (msgProtoName == "")
+            {
+                DebugKit.Warning("OnReceiveData MsgBase.DecodeName fail");
+                return null;
+            }
+
+            readIdx += nameCount;
+            //解析协议体
+            int bodyCount = bodyLength - nameCount;
+            MsgBase msgBase = MsgBase.Decode(msgProtoName, bytes, readIdx, bodyCount);
+            return msgBase;
+        }
     }
 }

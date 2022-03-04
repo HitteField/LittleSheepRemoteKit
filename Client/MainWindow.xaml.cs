@@ -26,18 +26,13 @@ namespace Client
         {
             InitializeComponent();
 
-            Thread netConnection = new Thread(NetConnection);
-            netConnection.Start();
+            DebugKit.SetTextBox(debugString);
+            
         }
 
-        public void NetConnection()
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            NetManager.Connect(NetManager.ConnectMethod.IPaddress, "127.0.0.1", 8888);
-            while(true)
-            {
-                Thread.Sleep(2);
-                NetManager.Update();
-            }
+            LANConnector.Instance.Initialization();
         }
     }
 }

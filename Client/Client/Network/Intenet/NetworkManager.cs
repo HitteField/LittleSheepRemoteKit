@@ -9,15 +9,6 @@ namespace LittleSheep
 {
     public class NetManager
     {
-        /// <summary>
-        /// 网络事件枚举
-        /// </summary>
-        public enum NetEvent
-        {
-            ConnectSucc = 1,
-            ConnectFail = 2,
-            Close = 3
-        }
 
         //套接字
         static Socket socket;
@@ -25,126 +16,9 @@ namespace LittleSheep
         static ByteArray readBuff;
         //写入队列
         static Queue<ByteArray> writeQueue;
-
-        /// <summary>
-        /// 事件的委托类型，无返回值的传参为string的方法
-        /// </summary>
-        /// <param name="err">参数</param>
-        public delegate void EventListener(string err);
-        /// <summary>
-        /// 事件监听列表字典，<事件，事件的监听者>键值对
-        /// </summary>
-        private static Dictionary<NetEvent, EventListener> eventListeners = new Dictionary<NetEvent, EventListener>();
-
-        /// <summary>
-        /// 消息的委托类型，无返回值的传参为MsgBase的方法
-        /// </summary>
-        /// <param name="msgBase"></param>
-        public delegate void MsgListener(MsgBase msgBase);
-        /// <summary>
-        /// 消息监听列表字典，<消息名，消息的监听者>键值对
-        /// </summary>
-        private static Dictionary<string, MsgListener> msgListeners = new Dictionary<string, MsgListener>();
-
-        /// <summary>
-        /// 添加事件监听（注册事件）
-        /// </summary>
-        /// <param name="netEvent">监听的网络事件</param>
-        /// <param name="listener">监听者（注册此事件的方法）</param>
-        public static void AddEventListener(NetEvent netEvent, EventListener listener)
-        {
-            if (eventListeners.ContainsKey(netEvent))
-            {
-                //如果已存在注册此事件的方法，就加上去（添加）
-                eventListeners[netEvent] += listener;
-            }
-            else
-            {
-                //否则注册此事件（新建）
-                eventListeners[netEvent] = listener;
-            }
-        }
-
-        /// <summary>
-        /// 删除事件监听（取消注册事件）
-        /// </summary>
-        /// <param name="netEvent">监听的网络事件</param>
-        /// <param name="listener">要删除的监听者</param>
-        public static void RemoveEventListener(NetEvent netEvent, EventListener listener)
-        {
-            if (eventListeners.ContainsKey(netEvent))
-            {
-                eventListeners[netEvent] -= listener;
-                if (eventListeners[netEvent] == null)
-                {
-                    //如果此事件已无监听者，就把此事件从监听列表中删掉
-                    eventListeners.Remove(netEvent);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 添加消息监听（注册消息）
-        /// </summary>
-        /// <param name="msgName">监听的消息</param>
-        /// <param name="listener">监听者（注册此消息的方法）</param>
-        public static void AddMsgListener(string msgName, MsgListener listener)
-        {
-            if (msgListeners.ContainsKey(msgName))
-            {
-                //如果已存在注册此消息的方法，就加上去（添加）
-                msgListeners[msgName] += listener;
-            }
-            else
-            {
-                //否则注册此消息（新建）
-                msgListeners[msgName] = listener;
-            }
-        }
-
-        /// <summary>
-        /// 删除消息监听（取消注册消息）
-        /// </summary>
-        /// <param name="msgName">监听的消息</param>
-        /// <param name="listener">要删除的监听者</param>
-        public static void RemoveMsgListener(string msgName, MsgListener listener)
-        {
-            if (msgListeners.ContainsKey(msgName))
-            {
-                msgListeners[msgName] -= listener;
-                if (msgListeners[msgName] == null)
-                {
-                    //如果此消息已无监听者，就把此消息从监听列表中删掉
-                    msgListeners.Remove(msgName);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 分发事件，在某事件发生的时候通知所有的监听者
-        /// </summary>
-        /// <param name="netEvent">发生的网络事件</param>
-        /// <param name="err">给监听者们发送的传参</param>
-        private static void FireEvent(NetEvent netEvent, string err)
-        {
-            if (eventListeners.ContainsKey(netEvent))
-            {
-                eventListeners[netEvent](err);
-            }
-        }
-
-        /// <summary>
-        /// 分发消息，在某消息到来并被处理后通知所有监听者
-        /// </summary>
-        /// <param name="msgName">消息</param>
-        /// <param name="msgBase">消息类</param>
-        private static void FireMsg(string msgName, MsgBase msgBase)
-        {
-            if (msgListeners.ContainsKey(msgName))
-            {
-                msgListeners[msgName](msgBase);
-            }
-        }
+        //网络事件管理器
+        static NetMsgHandler msgHandler = new NetMsgHandler();
+        
 
         /// <summary>
         /// 需要高频更新的一些内容
@@ -185,9 +59,9 @@ namespace LittleSheep
             isClosing = false;              //当然也没关闭
 
             //监听PONG协议（心跳机制）
-            if (!msgListeners.ContainsKey("MsgPong"))
+            if (!msgHandler.HasMsgListener("MsgPong"))
             {
-                AddMsgListener("MsgPong", OnMsgPong);
+                msgHandler.AddMsgListener("MsgPong", OnMsgPong);
             }
         }
 
@@ -244,7 +118,7 @@ namespace LittleSheep
                 Socket socket = (Socket)ar.AsyncState;
                 socket.EndConnect(ar);
                 DebugKit.Log("Socket Connect Succ.");
-                FireEvent(NetEvent.ConnectSucc, string.Empty);      //分发“连接成功”事件
+                msgHandler.FireEvent(NetEvent.ConnectSucc, string.Empty);      //分发“连接成功”事件
                 isConnecting = false;                               //连接结束
                                                                     //连接完成，开始接收消息
                 socket.BeginReceive(readBuff.bytes, readBuff.writeIdx, readBuff.Remain, 0, ReceiveCallback, socket);
@@ -252,7 +126,7 @@ namespace LittleSheep
             catch (Exception ex)
             {
                 DebugKit.Log("Socket Connect Fail with reason: " + ex.ToString());
-                FireEvent(NetEvent.ConnectFail, ex.ToString());     //分发“连接失败”事件
+                msgHandler.FireEvent(NetEvent.ConnectFail, ex.ToString());     //分发“连接失败”事件
                 isConnecting = false;                               //连接结束
             }
         }
@@ -270,7 +144,7 @@ namespace LittleSheep
             else
             {
                 socket.Close();
-                FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
             }
 
         }
@@ -303,18 +177,7 @@ namespace LittleSheep
             if (isClosing) return;
 
             //数据编码
-            byte[] nameBytes = MsgBase.EncodeName(msg);
-            byte[] bodyBytes = MsgBase.Encode(msg);
-
-            int len = nameBytes.Length + bodyBytes.Length;          //总长度
-            byte[] sendBytes = new byte[2 + len];                   //前面还有2字节的消息总长度
-
-            //组装
-            sendBytes[0] = (byte)(len % 256);
-            sendBytes[1] = (byte)(len / 256);
-
-            Array.Copy(nameBytes, 0, sendBytes, 2, nameBytes.Length);                           //拷贝协议名部分
-            Array.Copy(bodyBytes, 0, sendBytes, 2 + nameBytes.Length, bodyBytes.Length);        //拷贝协议体部分
+            byte[] sendBytes = MsgBase.EncodeToSendBytes(msg);
 
             //写入队列
             ByteArray ba = new ByteArray(sendBytes);
@@ -362,7 +225,7 @@ namespace LittleSheep
             else if (isClosing)                  //全都发完了后康康是否正在关闭
             {
                 socket.Close();
-                FireEvent(NetEvent.Close, string.Empty);        //分发事件
+                msgHandler.FireEvent(NetEvent.Close, string.Empty);        //分发事件
                 isClosing = false;
             }
 
@@ -409,7 +272,7 @@ namespace LittleSheep
             }
             catch (Exception ex)
             {
-                FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
                 DebugKit.Warning("Socket Receive Fail with reason: " + ex.ToString());
             }
         }
@@ -475,7 +338,7 @@ namespace LittleSheep
 
                 if (msgBase != null)
                 {
-                    FireMsg(msgBase.protoName, msgBase);
+                    msgHandler.FireMsg(msgBase.protoName, msgBase);
                 }
                 else break;             //没有新的消息了
             }

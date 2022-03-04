@@ -12,7 +12,7 @@ namespace LittleSheep
     class LANProbeRequestMsg : MsgBase
     {
         public LANProbeRequestMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
-
+        public string ip = "";
     }
 
     /// <summary>
@@ -21,7 +21,7 @@ namespace LittleSheep
     class LANProbeReplyMsg : MsgBase
     {
         public LANProbeReplyMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
-        string userName;
+        public string userName;
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ namespace LittleSheep
     class LANConnectRequestMsg : MsgBase
     {
         public LANConnectRequestMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
-        string userName;
+        public string userName;
     }
 
     /// <summary>
@@ -39,6 +39,6 @@ namespace LittleSheep
     class LANConnectReplyMsg : MsgBase
     {
         public LANConnectReplyMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
-        bool permission = true;
+        public bool permission = true;
     }
 }
