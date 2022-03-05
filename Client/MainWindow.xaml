@@ -8,6 +8,8 @@
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <TextBox Name="debugString" Text="" HorizontalAlignment="Left" Height="399" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="514" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Visible"/>
-        <Button Content="Button" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="555,25,0,0" Click="Button_Click"/>
+        <Button Name="initLanButton" Content="初始化LAN" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="555,25,0,0" Click="InitLan_Click"/>
+        <Button Name="startRecvBoardcastButton" Content="开启接收广播" HorizontalAlignment="Left" Margin="555,58,0,0" VerticalAlignment="Top" Width="75" Click="StartRecvBoardcast_Click"/>
+        <Button Name="sendBoardcastButton" Content="发送广播探查" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="555,93,0,0" Click="sendBoardcast_Click"/>
     </Grid>
 </Window>

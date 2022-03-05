@@ -28,11 +28,6 @@ namespace LittleSheep
         /// <returns>初始化结果</returns>
         bool Initialization();
         /// <summary>
-        /// 初始化LAN广播模块
-        /// </summary>
-        /// <returns></returns>
-        bool InitializationBoardcast();
-        /// <summary>
         /// 广播一条消息
         /// </summary>
         /// <param name="msg"></param>
@@ -58,7 +53,7 @@ namespace LittleSheep
         /// 发送单播连接请求报文
         /// </summary>
         /// <returns></returns>
-        bool LANConnectRequest();
+        bool LANConnectRequest(RemoteUser remoteUser);
         #endregion
     }
 }

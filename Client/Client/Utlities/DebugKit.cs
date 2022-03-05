@@ -7,6 +7,8 @@ using Client;
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Text;
+using System.Threading;
+using System.Windows.Threading;
 
 namespace LittleSheep
 {
@@ -18,28 +20,48 @@ namespace LittleSheep
         {
             textBox = _textBox;
         }
-        public static void Debug(string debugInformation, ConsoleColor consoleColor = ConsoleColor.White)
-        {
-            //Console.ForegroundColor = consoleColor;
-            Log(debugInformation);
-            //Console.ForegroundColor = ConsoleColor.White;
-        }
-
-        public static void Log(string debugInformation)
+        private static void Debug(string debugInformation)
         {
             string msg = DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]") + debugInformation + "\n";
+
             textBox.AppendText(msg);
             textBox.ScrollToEnd();
         }
 
+        public static void Log(string debugInformation)
+        {
+            textBox.Dispatcher.Invoke(new Action(delegate
+            {
+                string msg = DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]") + "[Log]" + debugInformation + "\n";
+
+                textBox.AppendText(msg);
+                textBox.ScrollToEnd();
+            }));
+            //printDebug.BeginInvoke("[Log]" + debugInformation, null, null);
+        }
+
         public static void Warning(string debugInformation)
         {
-            Debug("[Warning]" + debugInformation, ConsoleColor.Yellow);
+            textBox.Dispatcher.Invoke(new Action(delegate
+            {
+                string msg = DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]") + "[Warning]" + debugInformation + "\n";
+
+                textBox.AppendText(msg);
+                textBox.ScrollToEnd();
+            }));
+            //printDebug.BeginInvoke("[Warning]" + debugInformation, null, null);
         }
 
         public static void Error(string debugInformation)
         {
-            Debug("[Error]" + debugInformation, ConsoleColor.Red);
+            textBox.Dispatcher.Invoke(new Action(delegate
+            {
+                string msg = DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]") + "[Error]" + debugInformation + "\n";
+
+                textBox.AppendText(msg);
+                textBox.ScrollToEnd();
+            }));
+            //printDebug.BeginInvoke("[Error]" + debugInformation, null, null);
         }
     }
 }

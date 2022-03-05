@@ -35,7 +35,7 @@ namespace LittleSheep
         /// 消息的委托类型，无返回值的传参为MsgBase的方法
         /// </summary>
         /// <param name="msgBase"></param>
-        public delegate void MsgListener(MsgBase msgBase);
+        public delegate void MsgListener(MsgBase msgBase, object[] args);
         /// <summary>
         /// 消息监听列表字典，<消息名，消息的监听者>键值对
         /// </summary>
@@ -169,11 +169,24 @@ namespace LittleSheep
         /// </summary>
         /// <param name="msgName">消息</param>
         /// <param name="msgBase">消息类</param>
+        public void FireMsg(string msgName, MsgBase msgBase, object[] args)
+        {
+            if (msgListeners.ContainsKey(msgName))
+            {
+                msgListeners[msgName](msgBase, args);
+            }
+        }
+
+        /// <summary>
+        /// 分发消息，在某消息到来并被处理后通知所有监听者
+        /// </summary>
+        /// <param name="msgName">消息</param>
+        /// <param name="msgBase">消息类</param>
         public void FireMsg(string msgName, MsgBase msgBase)
         {
             if (msgListeners.ContainsKey(msgName))
             {
-                msgListeners[msgName](msgBase);
+                msgListeners[msgName](msgBase, null);
             }
         }
     }

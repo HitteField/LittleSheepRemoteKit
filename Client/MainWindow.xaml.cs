@@ -30,9 +30,28 @@ namespace Client
             
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void InitLan_Click(object sender, RoutedEventArgs e)
         {
             LANConnector.Instance.Initialization();
+        }
+
+        private void StartRecvBoardcast_Click(object sender, RoutedEventArgs e)
+        {
+            if(LANConnector.Instance.OpenToLan == false)
+            {
+                LANConnector.Instance.OpenToLan = true;
+                startRecvBoardcastButton.Content = "关闭接收广播";
+            }
+            else
+            {
+                LANConnector.Instance.OpenToLan = false;
+                startRecvBoardcastButton.Content = "开启接收广播";
+            }
+        }
+
+        private void sendBoardcast_Click(object sender, RoutedEventArgs e)
+        {
+            LANConnector.Instance.LANProbeRequest();
         }
     }
 }

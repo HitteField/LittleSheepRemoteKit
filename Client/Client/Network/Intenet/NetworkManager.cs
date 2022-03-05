@@ -380,7 +380,7 @@ namespace LittleSheep
             }
         }
 
-        private static void OnMsgPong(MsgBase msgBase)
+        private static void OnMsgPong(MsgBase msgBase, object[] args)
         {
             lastPongTime = TimeKit.GetTimeStamp();
         }
