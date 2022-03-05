@@ -53,5 +53,10 @@ namespace Client
         {
             LANConnector.Instance.LANProbeRequest();
         }
+
+        private void userNameString_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UserInformation.Instance.Username = userNameString.Text;
+        }
     }
 }

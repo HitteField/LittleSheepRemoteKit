@@ -16,3 +16,5 @@ D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net46\Client.csproj.CoreCo
 D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net46\Client.csproj.CopyComplete
 D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net46\Client.exe
 D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net46\Client.pdb
+D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net46\Interop.NetFwTypeLib.dll
+D:\Code\Project\LittleSheepRemoteKit\Client\obj\Debug\net46\Client.csproj.ResolveComReference.cache

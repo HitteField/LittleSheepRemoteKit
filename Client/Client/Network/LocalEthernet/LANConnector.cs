@@ -19,6 +19,11 @@ namespace LittleSheep
             this.endPoint = endPoint;
         }
 
+        public override string ToString()
+        {
+            return userName + " " + endPoint.ToString();
+        }
+
         public bool Equals(RemoteUser other)
         {
             if (ReferenceEquals(null, other)) return false;
