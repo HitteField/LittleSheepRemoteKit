@@ -202,7 +202,7 @@ namespace LittleSheep
         public bool LANConnectRequest(RemoteUser remoteUser)
         {
             LANConnectRequestMsg connectRequestMsg = new LANConnectRequestMsg();
-            connectRequestMsg.userName = UserInformation.Instance.Username;
+            connectRequestMsg.userName = UserInformationCache.Default.UserName;
             try
             {
                 UdpClient sender = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
@@ -235,7 +235,7 @@ namespace LittleSheep
 
             //LANProbeRequestMsg probeRequestMsg = (LANProbeRequestMsg)msg;
             LANProbeReplyMsg probeReplyMsg = new LANProbeReplyMsg();
-            probeReplyMsg.userName = UserInformation.Instance.Username;
+            probeReplyMsg.userName = UserInformationCache.Default.UserName;
             IPEndPoint targetEndPoint = (IPEndPoint)args[0];
 
             try

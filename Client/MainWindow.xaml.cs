@@ -25,8 +25,10 @@ namespace Client
         public MainWindow()
         {
             InitializeComponent();
+            RootManager.Instance.GlobalInit();
 
             DebugKit.SetTextBox(debugString);
+            userNameString.Text = UserInformationCache.Default.UserName;
             
         }
 
@@ -56,7 +58,18 @@ namespace Client
 
         private void userNameString_TextChanged(object sender, TextChangedEventArgs e)
         {
-            UserInformation.Instance.Username = userNameString.Text;
+            UserInformationCache.Default.UserName = userNameString.Text;
+            UserInformationCache.Default.Save();
+        }
+
+        /// <summary>
+        /// 关闭主窗口时
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            RootManager.Instance.GlobalDestruct();
         }
     }
 }
