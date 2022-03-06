@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace LittleSheep
 {
     /// <summary>
-    /// Interaction logic for App.xaml
+    /// sid信息
     /// </summary>
-    public partial class App : Application
+    public class SidMsg : MsgBase
     {
+        public SidMsg() { protoName = "SidMsg"; }
+        public int sid = 0;
     }
 }
