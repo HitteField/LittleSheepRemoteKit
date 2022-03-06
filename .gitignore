@@ -1,3 +1,5 @@
 ..vs
-.bin
-.obj
+.Client/bin
+.Client/obj
+.Server/bin
+.Server/obj
