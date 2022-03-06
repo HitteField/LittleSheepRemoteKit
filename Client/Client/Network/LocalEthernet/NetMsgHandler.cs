@@ -13,7 +13,8 @@ namespace LittleSheep
     {
         ConnectSucc = 1,
         ConnectFail = 2,
-        Close = 3
+        Close = 3,
+        LANRemoteUserListReady = 4
     }
     /// <summary>
     /// 网络模块事件注册管理

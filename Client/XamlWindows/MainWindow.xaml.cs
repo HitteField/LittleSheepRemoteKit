@@ -15,7 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using LittleSheep;
 
-namespace Client
+namespace LittleSheep.XamlWindows
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -24,12 +24,17 @@ namespace Client
     {
         public MainWindow()
         {
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
             InitializeComponent();
             RootManager.Instance.GlobalInit();
 
+            //窗口内容初始化
             DebugKit.SetTextBox(debugString);
             userNameString.Text = UserInformationCache.Default.UserName;
-            
+            LANConnector.Instance.msgHandler.AddMsgListener("LANConnectRequestMsg", OnRecvLANConnectRequestMsg);
+            LANConnector.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserListReady, OnLANRemoteUserListReady);
+     
         }
 
         private void InitLan_Click(object sender, RoutedEventArgs e)
@@ -70,6 +75,30 @@ namespace Client
         private void Window_Closed(object sender, EventArgs e)
         {
             RootManager.Instance.GlobalDestruct();
+        }
+
+        /// <summary>
+        /// 双击RemoteUserList表格时
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RemoteUserList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            DataGrid dataGrid = sender as DataGrid;
+            Point aP = e.GetPosition(dataGrid);
+            IInputElement obj = dataGrid.InputHitTest(aP);
+            DependencyObject target = obj as DependencyObject;
+
+            while(target!=null)
+            {
+                if(target is DataGridRow)
+                {
+                    //双击得到的用户
+                    RemoteUser s = (RemoteUser)dataGrid.SelectedItem;
+                    LANConnector.Instance.LANConnectRequest(s);
+                }
+                target = VisualTreeHelper.GetParent(target);
+            }
         }
     }
 }

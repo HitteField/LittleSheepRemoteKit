@@ -6,19 +6,38 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace LittleSheep
 {
-    struct RemoteUser
+    public struct RemoteUser
     {
         public string userName;
         public IPEndPoint endPoint;
+
+        public String UserName { get; set; }
+        public String EndPoint
+        {
+            get
+            {
+                return endPoint.ToString();
+            }
+            set
+            {
+                string[] endPontStr = value.Split(':');
+                endPoint = new IPEndPoint(IPAddress.Parse(endPontStr[0]), Convert.ToInt32(endPontStr[1]));
+            }
+        }
+
         public RemoteUser(string userName, IPEndPoint endPoint)
         {
             this.userName = userName;
             this.endPoint = endPoint;
+            UserName = userName;
         }
 
+        #region 重载的函数
         public override string ToString()
         {
             return userName + " " + endPoint.ToString();
@@ -55,6 +74,7 @@ namespace LittleSheep
         {
             return !Equals(left, right);
         }
+        #endregion
 
     }
     class LANConnector : ILANConnector
@@ -182,10 +202,7 @@ namespace LittleSheep
                 MsgBase msg = MsgBase.DecodeFromRecvBytes(buf);
 
                 object[] args = new object[1];
-                if (msg.protoName == "LANProbeReplyMsg")
-                {
-                    args[0] = endPoint;
-                }
+                args[0] = endPoint;
 
                 msgHandler.FireMsg(msg.protoName, msg, args);
 
@@ -214,6 +231,25 @@ namespace LittleSheep
             catch (Exception ex)
             {
                 DebugKit.Warning("[LANConnectRequest]" + ex.Message);
+                return false;
+            }
+        }
+
+        public bool LANConnectReply(RemoteUser remoteUser, bool isAgree)
+        {
+            LANConnectReplyMsg connectReplyMsg = new LANConnectReplyMsg();
+            connectReplyMsg.permission = isAgree;
+            try
+            {
+                UdpClient sender = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
+                IPEndPoint endPoint = new IPEndPoint(remoteUser.endPoint.Address, 20713);
+                byte[] bytes = MsgBase.EncodeToSendBytes(connectReplyMsg);
+                sender.Send(bytes, bytes.Length, endPoint);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugKit.Warning("[LANConnectReply]" + ex.Message);
                 return false;
             }
         }
@@ -268,6 +304,7 @@ namespace LittleSheep
                 remoteUsers.Add(newUser);
                 DebugKit.Log("New Remote User:" + newUser.ToString());
             }
+            msgHandler.FireEvent(NetEvent.LANRemoteUserListReady, null);
         }
 
         /// <summary>
@@ -287,8 +324,46 @@ namespace LittleSheep
         /// <param name="args"></param>
         void OnRecvLANConnectReplyMsg(MsgBase msg, object[] args)
         {
-
+            LANConnectReplyMsg connectReplyMsg = (LANConnectReplyMsg)msg;
+            DebugKit.Log("Recv LANConnectReplyMsg with result:" + connectReplyMsg.permission.ToString());
         }
         #endregion
+    }
+}
+
+namespace LittleSheep.XamlWindows
+{
+    public partial class MainWindow : Window
+    {
+        /// <summary>
+        /// 收到连接请求报文时
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="args"></param>
+        void OnRecvLANConnectRequestMsg(MsgBase msg, object[] args)
+        {
+            //收到了连接请求时，需要给对方一个回复：是否同意连接
+            LANConnectRequestMsg connectRequestMsg = (LANConnectRequestMsg)msg;
+            IPEndPoint endPoint = (IPEndPoint)args[0];
+            RemoteUser applicant = new RemoteUser(connectRequestMsg.userName, endPoint);
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                XamlWindows.RecvLANConnectRequestMsgWindow window = new XamlWindows.RecvLANConnectRequestMsgWindow();
+                window.Title = "收到了新的连接请求";
+                window.Owner = this;
+                window.HintMsg.Text = string.Format("收到了来自{0}的局域网连接控制请求，是否同意？", applicant.ToString());
+                window.remoteUser = applicant;
+                window.Show();
+            }));
+        }
+
+        void OnLANRemoteUserListReady(string err)
+        {
+            RemoteUserList.Dispatcher.Invoke(new Action(delegate
+            {
+                RemoteUserList.ItemsSource = LANConnector.Instance.remoteUsers;
+            }));
+        }
+
     }
 }

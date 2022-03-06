@@ -7,7 +7,15 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="MainWindow.xaml">
+    <Compile Update="XamlWindows\RecvLANConnectRequestMsgWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="XamlWindows\MainWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="XamlWindows\RecvLANConnectRequestMsgWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
