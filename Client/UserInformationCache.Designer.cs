@@ -12,7 +12,7 @@ namespace LittleSheep {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.10.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.8.1.0")]
     internal sealed partial class UserInformationCache : global::System.Configuration.ApplicationSettingsBase {
         
         private static UserInformationCache defaultInstance = ((UserInformationCache)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new UserInformationCache())));
