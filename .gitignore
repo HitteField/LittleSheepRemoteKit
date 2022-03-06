@@ -1,7 +1,7 @@
 .vs/*
-Client/.vs
-Client/bin
-Client/obj
-Server/.vs
-Server/bin
-Server/obj
+Client/.vs/*
+Client/bin/*
+Client/obj/*
+Server/.vs/*
+Server/bin/*
+Server/obj/*
