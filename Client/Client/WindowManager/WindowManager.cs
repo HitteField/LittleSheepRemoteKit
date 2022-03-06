@@ -66,9 +66,7 @@ namespace LittleSheep.Client.WindowGetter
         /// </summary>
         /// <param name="stream">压缩的字节流</param>
         /// <returns>解压字节流后并解码的Bitmap</returns>
-        public Bitmap WindowSetter(byte[] stream) {
-            Bitmap res = new Bitmap();
-        }
+        
     }
 
 
