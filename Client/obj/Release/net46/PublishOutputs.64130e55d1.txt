@@ -1,0 +1,4 @@
+D:\Code\Project\LittleSheepRemoteKit\Client\bin\Release\net46\publish\Client.exe
+D:\Code\Project\LittleSheepRemoteKit\Client\bin\Release\net46\publish\Client.exe.config
+D:\Code\Project\LittleSheepRemoteKit\Client\bin\Release\net46\publish\Client.pdb
+D:\Code\Project\LittleSheepRemoteKit\Client\bin\Release\net46\publish\Newtonsoft.Json.dll

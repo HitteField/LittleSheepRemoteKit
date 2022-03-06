@@ -5,6 +5,18 @@
     <TargetFramework>net46</TargetFramework>
     <UseWPF>true</UseWPF>
     <RootNamespace>LittleSheep</RootNamespace>
+    <PackageId>LittleSheepRemoteKit</PackageId>
+    <Authors>LeoField &amp; Sawyer</Authors>
+    <Company>LittleSheep</Company>
+    <Product>LittleSheepRemoteKit</Product>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+	<RuntimeIdentifiers>win10-x64;win-x64;win10-x86;win-x86</RuntimeIdentifiers>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +37,21 @@
 
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

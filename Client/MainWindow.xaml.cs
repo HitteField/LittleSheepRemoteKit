@@ -58,5 +58,12 @@ namespace Client
         {
             UserInformation.Instance.Username = userNameString.Text;
         }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            FirewallOperation.NetFwDelApps(20713, System.Net.Sockets.ProtocolType.Udp);
+            FirewallOperation.NetFwDelApps(20714, System.Net.Sockets.ProtocolType.Udp);
+        
+        }
     }
 }

@@ -94,6 +94,9 @@ namespace LittleSheep
         {
             try
             {
+                FirewallOperation.NetFwAddPorts("LittleSheepBoardcast", 20713, ProtocolType.Udp);
+                FirewallOperation.NetFwAddPorts("LittleSheepUnicast", 20714, ProtocolType.Udp);
+
                 boardcastfd = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
 
                 msgHandler.AddMsgListener("LANProbeRequestMsg", OnRecvLANProbeRequestMsg);

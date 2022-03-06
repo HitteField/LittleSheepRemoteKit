@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>LittleSheepRemoteKit</id>
+    <version>1.0.0</version>
+    <authors>LeoField &amp; Sawyer</authors>
+    <description>Package Description</description>
+    <dependencies>
+      <group targetFramework=".NETFramework4.6">
+        <dependency id="Newtonsoft.Json" version="13.0.1" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Windows.Forms" targetFramework=".NETFramework4.6" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="D:\Code\Project\LittleSheepRemoteKit\Client\bin\Debug\net46\Client.exe" target="lib\net46\Client.exe" />
+  </files>
+</package>

@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800"
+        Closed="Window_Closed">
     <Grid>
         <TextBox Name="debugString" Text="" HorizontalAlignment="Left" Height="399" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="514" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Visible"/>
         <Button Name="initLanButton" Content="初始化LAN" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="555,25,0,0" Click="InitLan_Click"/>

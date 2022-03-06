@@ -47,7 +47,11 @@ namespace LittleSheep
                     break;
                 }
             }
-            if (!exist) netFwMgr.LocalPolicy.CurrentProfile.GloballyOpenPorts.Add(objPort);
+            if (!exist)
+            {
+                netFwMgr.LocalPolicy.CurrentProfile.GloballyOpenPorts.Add(objPort);
+                DebugKit.Log(string.Format("Port:{0} has added with protocol {1}", port, protocol.ToString()));
+            }
         }
 
         /// <summary>
