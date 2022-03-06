@@ -44,8 +44,7 @@ namespace LittleSheep.Client.WindowGetter
             Bitmap cur = GetScreenBitmap();
             using(MemoryStream stream = new MemoryStream()) {
                 cur.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg);
-                byte[] res = CompressKit.CompressBytes(stream.ToArray());
-                return res;
+                return CompressKit.CompressBytes(stream.ToArray());
             }
         }
 
