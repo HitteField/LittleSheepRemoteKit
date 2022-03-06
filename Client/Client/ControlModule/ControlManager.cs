@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LittleSheep.Client.WindowManager
+namespace LittleSheep
 {
     class ControlManager
     {
@@ -16,7 +16,5 @@ namespace LittleSheep.Client.WindowManager
         private ControlManager() { }
         public static ControlManager Instance { get { return Nested.instance; } }
         #endregion
-
-        public 
     }
 }

@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace LittleSheep.Client.WindowGetter
+namespace LittleSheep
 {
     class WindowManager
     {
