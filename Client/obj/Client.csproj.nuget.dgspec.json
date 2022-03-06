@@ -8,7 +8,7 @@
       "version": "1.0.0",
       "restore": {
         "projectUniqueName": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj",
-        "projectName": "Client",
+        "projectName": "LittleSheepRemoteKit",
         "projectPath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj",
         "packagesPath": "C:\\Users\\Lantyais\\.nuget\\packages\\",
         "outputPath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\obj\\",
@@ -59,7 +59,16 @@
         }
       },
       "runtimes": {
-        "win7-x86": {
+        "win-x64": {
+          "#import": []
+        },
+        "win-x86": {
+          "#import": []
+        },
+        "win10-x64": {
+          "#import": []
+        },
+        "win10-x86": {
           "#import": []
         },
         "win7-x86": {

@@ -21,9 +21,6 @@
         }
       }
     },
-<<<<<<< Updated upstream
-    ".NETFramework,Version=v4.6/win7-x86": {
-=======
     ".NETFramework,Version=v4.6/win-x64": {
       "Newtonsoft.Json/13.0.1": {
         "type": "package",
@@ -85,7 +82,6 @@
       }
     },
     ".NETFramework,Version=v4.6/win10-x86": {
->>>>>>> Stashed changes
       "Newtonsoft.Json/13.0.1": {
         "type": "package",
         "compile": {
@@ -191,7 +187,7 @@
     "version": "1.0.0",
     "restore": {
       "projectUniqueName": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj",
-      "projectName": "Client",
+      "projectName": "LittleSheepRemoteKit",
       "projectPath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\Client.csproj",
       "packagesPath": "C:\\Users\\Lantyais\\.nuget\\packages\\",
       "outputPath": "D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\obj\\",
@@ -242,12 +238,29 @@
       }
     },
     "runtimes": {
-      "win7-x86": {
+      "win-x64": {
+        "#import": []
+      },
+      "win-x86": {
+        "#import": []
+      },
+      "win10-x64": {
+        "#import": []
+      },
+      "win10-x86": {
         "#import": []
       },
       "win7-x86": {
         "#import": []
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "Undefined",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "读取缓存文件 D:\\Code\\Project\\LittleSheepRemoteKit\\Client\\obj\\project.nuget.cache 时遇到问题: Invalid property identifier character: <. Path 'version', line 3, position 0."
+    }
+  ]
 }

@@ -5,8 +5,6 @@
     <TargetFramework>net46</TargetFramework>
     <UseWPF>true</UseWPF>
     <RootNamespace>LittleSheep</RootNamespace>
-<<<<<<< Updated upstream
-=======
     <PackageId>LittleSheepRemoteKit</PackageId>
     <Authors>LeoField &amp; Sawyer</Authors>
     <Company>LittleSheep</Company>
@@ -19,7 +17,6 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
->>>>>>> Stashed changes
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,6 +38,21 @@
 
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>
