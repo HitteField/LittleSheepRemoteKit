@@ -1,7 +1,9 @@
-.vs/*
+.vs
 Client/.vs
 Client/bin
 Client/obj
+Client/Properties
 Server/.vs
 Server/bin
 Server/obj
+Server/Properties
