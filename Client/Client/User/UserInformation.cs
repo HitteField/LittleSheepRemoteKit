@@ -13,14 +13,8 @@ namespace LittleSheep
         {
             internal static readonly UserInformation instance = new UserInformation();
         }
-        private UserInformation() { Username = ""; }
+        private UserInformation() {  }
         public static UserInformation Instance { get { return Nested.instance; } }
         #endregion
-
-        /// <summary>
-        /// 用户标识符
-        /// </summary>
-        public string Username { get; set; }
-
     }
 }
