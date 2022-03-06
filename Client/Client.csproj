@@ -5,6 +5,21 @@
     <TargetFramework>net46</TargetFramework>
     <UseWPF>true</UseWPF>
     <RootNamespace>LittleSheep</RootNamespace>
+<<<<<<< Updated upstream
+=======
+    <PackageId>LittleSheepRemoteKit</PackageId>
+    <Authors>LeoField &amp; Sawyer</Authors>
+    <Company>LittleSheep</Company>
+    <Product>LittleSheepRemoteKit</Product>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+	<RuntimeIdentifiers>win10-x64;win-x64;win10-x86;win-x86;win7-x86</RuntimeIdentifiers>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+>>>>>>> Stashed changes
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +36,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SharpZipLib" Version="1.3.3" />
   </ItemGroup>
 
   <ItemGroup>

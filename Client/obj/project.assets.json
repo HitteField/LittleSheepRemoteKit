@@ -10,6 +10,99 @@
         "runtime": {
           "lib/net45/Newtonsoft.Json.dll": {}
         }
+      },
+      "SharpZipLib/1.3.3": {
+        "type": "package",
+        "compile": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        },
+        "runtime": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        }
+      }
+    },
+<<<<<<< Updated upstream
+    ".NETFramework,Version=v4.6/win7-x86": {
+=======
+    ".NETFramework,Version=v4.6/win-x64": {
+      "Newtonsoft.Json/13.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net45/Newtonsoft.Json.dll": {}
+        },
+        "runtime": {
+          "lib/net45/Newtonsoft.Json.dll": {}
+        }
+      },
+      "SharpZipLib/1.3.3": {
+        "type": "package",
+        "compile": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        },
+        "runtime": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.6/win-x86": {
+      "Newtonsoft.Json/13.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net45/Newtonsoft.Json.dll": {}
+        },
+        "runtime": {
+          "lib/net45/Newtonsoft.Json.dll": {}
+        }
+      },
+      "SharpZipLib/1.3.3": {
+        "type": "package",
+        "compile": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        },
+        "runtime": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.6/win10-x64": {
+      "Newtonsoft.Json/13.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net45/Newtonsoft.Json.dll": {}
+        },
+        "runtime": {
+          "lib/net45/Newtonsoft.Json.dll": {}
+        }
+      },
+      "SharpZipLib/1.3.3": {
+        "type": "package",
+        "compile": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        },
+        "runtime": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.6/win10-x86": {
+>>>>>>> Stashed changes
+      "Newtonsoft.Json/13.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net45/Newtonsoft.Json.dll": {}
+        },
+        "runtime": {
+          "lib/net45/Newtonsoft.Json.dll": {}
+        }
+      },
+      "SharpZipLib/1.3.3": {
+        "type": "package",
+        "compile": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        },
+        "runtime": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        }
       }
     },
     ".NETFramework,Version=v4.6/win7-x86": {
@@ -20,6 +113,15 @@
         },
         "runtime": {
           "lib/net45/Newtonsoft.Json.dll": {}
+        }
+      },
+      "SharpZipLib/1.3.3": {
+        "type": "package",
+        "compile": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
+        },
+        "runtime": {
+          "lib/net45/ICSharpCode.SharpZipLib.dll": {}
         }
       }
     }
@@ -51,11 +153,33 @@
         "newtonsoft.json.nuspec",
         "packageIcon.png"
       ]
+    },
+    "SharpZipLib/1.3.3": {
+      "sha512": "N8+hwhsKZm25tDJfWpBSW7EGhH/R7EMuiX+KJ4C4u+fCWVc1lJ5zg1u3S1RPPVYgTqhx/C3hxrqUpi6RwK5+Tg==",
+      "type": "package",
+      "path": "sharpziplib/1.3.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "images/sharpziplib-nuget-256x256.png",
+        "lib/net45/ICSharpCode.SharpZipLib.dll",
+        "lib/net45/ICSharpCode.SharpZipLib.pdb",
+        "lib/net45/ICSharpCode.SharpZipLib.xml",
+        "lib/netstandard2.0/ICSharpCode.SharpZipLib.dll",
+        "lib/netstandard2.0/ICSharpCode.SharpZipLib.pdb",
+        "lib/netstandard2.0/ICSharpCode.SharpZipLib.xml",
+        "lib/netstandard2.1/ICSharpCode.SharpZipLib.dll",
+        "lib/netstandard2.1/ICSharpCode.SharpZipLib.pdb",
+        "lib/netstandard2.1/ICSharpCode.SharpZipLib.xml",
+        "sharpziplib.1.3.3.nupkg.sha512",
+        "sharpziplib.nuspec"
+      ]
     }
   },
   "projectFileDependencyGroups": {
     ".NETFramework,Version=v4.6": [
-      "Newtonsoft.Json >= 13.0.1"
+      "Newtonsoft.Json >= 13.0.1",
+      "SharpZipLib >= 1.3.3"
     ]
   },
   "packageFolders": {
@@ -108,12 +232,19 @@
           "Newtonsoft.Json": {
             "target": "Package",
             "version": "[13.0.1, )"
+          },
+          "SharpZipLib": {
+            "target": "Package",
+            "version": "[1.3.3, )"
           }
         },
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {
+      "win7-x86": {
+        "#import": []
+      },
       "win7-x86": {
         "#import": []
       }

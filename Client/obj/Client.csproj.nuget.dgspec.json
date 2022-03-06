@@ -49,12 +49,19 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.1, )"
+            },
+            "SharpZipLib": {
+              "target": "Package",
+              "version": "[1.3.3, )"
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {
+        "win7-x86": {
+          "#import": []
+        },
         "win7-x86": {
           "#import": []
         }
