@@ -54,6 +54,12 @@ namespace LittleSheep
         /// </summary>
         /// <returns></returns>
         bool LANConnectRequest(RemoteUser remoteUser);
+        /// <summary>
+        /// 发送单播连接请求回复报文
+        /// </summary>
+        /// <param name="isAgree">是否同意</param>
+        /// <returns></returns>
+        bool LANConnectReply(RemoteUser remoteUser, bool isAgree);
         #endregion
     }
 }
