@@ -37,14 +37,16 @@ namespace LittleSheep.Client.WindowGetter
         }
 
         /// <summary>
-        /// 得到当前屏幕图像的字节流
+        /// 得到当前屏幕jpeg图像zip压缩的字节流
         /// </summary>
-        /// <returns>当前屏幕图像的字节流</returns>
+        /// <returns>当前屏幕jpeg图像zip压缩的字节流</returns>
         public byte[] WindowGetter() {
             Bitmap cur = GetScreenBitmap();
-            MemoryStream stream = new MemoryStream();
-            cur.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg);
-            return stream.ToArray();
+            using(MemoryStream stream = new MemoryStream()) {
+                cur.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg);
+                byte[] res = CompressKit.CompressBytes(stream.ToArray());
+                return res;
+            }
         }
 
         [DllImport("gdi32.dll", EntryPoint = "GetDeviceCaps", SetLastError = true)]
@@ -67,9 +69,11 @@ namespace LittleSheep.Client.WindowGetter
         /// <param name="stream">压缩的字节流</param>
         /// <returns>解压字节流后并解码的Bitmap</returns>
         public Bitmap WindowSetter(byte[] stream) {
-            Bitmap res = new Bitmap();
+            byte[] decodebytes = CompressKit.DecompressBytes(stream);
+            using(MemoryStream m_stream = new MemoryStream()) {
+                m_stream.Read(decodebytes,0,decodebytes.Length);
+                return new Bitmap(m_stream);
+            }
         }
     }
-
-
 }
