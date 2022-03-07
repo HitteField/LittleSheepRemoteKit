@@ -96,6 +96,7 @@ namespace LittleSheep.XamlWindows
                     //双击得到的用户
                     RemoteUser s = (RemoteUser)dataGrid.SelectedItem;
                     LANConnector.Instance.LANConnectRequest(s);
+                    MessageBox.Show($"已向目标用户{s}发送连接请求", "提示");
                 }
                 target = VisualTreeHelper.GetParent(target);
             }

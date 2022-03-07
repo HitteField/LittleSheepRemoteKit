@@ -19,14 +19,19 @@ namespace LittleSheep
 
         public void GlobalInit()
         {
-            FirewallOperation.NetFwAddPorts("LittleSheepBoardcast", 20713, System.Net.Sockets.ProtocolType.Udp);
-            FirewallOperation.NetFwAddPorts("LittleSheepUnicast", 20714, System.Net.Sockets.ProtocolType.Udp);
+            //FirewallOperation.NetFwAddPorts("LittleSheepBoardcast", 20713, System.Net.Sockets.ProtocolType.Udp);
+            //FirewallOperation.NetFwAddPorts("LittleSheepUnicast", 20714, System.Net.Sockets.ProtocolType.Udp);
+            FirewallOperation.CreateRule(FirewallOperation.ProtocolType.UDP, "LittleSheepBoardcast", localPorts: 20714);
+            FirewallOperation.CreateRule(FirewallOperation.ProtocolType.UDP, "LittleSheepUnicast", localPorts: 20713);
         }
 
         public void GlobalDestruct()
         {
-            FirewallOperation.NetFwDelApps(20713, System.Net.Sockets.ProtocolType.Udp);
-            FirewallOperation.NetFwDelApps(20714, System.Net.Sockets.ProtocolType.Udp);
+            //FirewallOperation.NetFwDelApps(20713, System.Net.Sockets.ProtocolType.Udp);
+            //FirewallOperation.NetFwDelApps(20714, System.Net.Sockets.ProtocolType.Udp);
+
+            FirewallOperation.DeleteRule("LittleSheepBoardcast");
+            FirewallOperation.DeleteRule("LittleSheepUnicast");
 
             UserInformationCache.Default.Save();
         }
