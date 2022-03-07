@@ -34,6 +34,13 @@ namespace LittleSheep
         /// <returns>广播成功与否</returns>
         bool BoardcastMsg(MsgBase msg);
         /// <summary>
+        /// 单播一条消息
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="remoteUser"></param>
+        /// <returns>单播成功与否</returns>
+        bool UnicastMsg(MsgBase msg, RemoteUser remoteUser);
+        /// <summary>
         /// 收到广播消息
         /// </summary>
         /// <param name="ar"></param>

@@ -1,0 +1,37 @@
+﻿<Window x:Class="LittleSheep.XamlWindows.FunctionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LittleSheep.XamlWindows"
+        mc:Ignorable="d"
+        Title="功能页" Height="675" Width="1150"
+        ResizeMode="CanResize"
+        Closed="Window_Closed">
+    <Grid>
+        <Viewbox Stretch="Fill">
+            <Canvas Name="FunctionCanvas" Width="1153" Height="675">
+                <Viewbox Stretch="Fill">
+                    <TabControl HorizontalAlignment="Center" Margin="5">
+                        <TabItem Header="视频页" Name="TabItem1">
+                            <StackPanel>
+                                <Image Name="Displayer" Width="1136" Height="639">
+
+                                </Image>
+                            </StackPanel>
+                        </TabItem>
+                        <TabItem Header="文件传输" Name="TabItem2">
+                            <Grid Background="#FFE5E5E5" Width="1136" Height="639">
+                                <TextBlock Name="FilePageTips" HorizontalAlignment="Left" Margin="27,26,0,0" TextWrapping="Wrap" VerticalAlignment="Top" FontSize="20"/>
+                                <Button Name="ChooseFileBtn" Content="选择文件" HorizontalAlignment="Left" Margin="27,89,0,0" VerticalAlignment="Top" Width="92" FontSize="20" Click="ChooseFileBtn_Click"/>
+                                <TextBox Name="ChooseFilePathString" HorizontalAlignment="Left" Height="29" Margin="149,89,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="856" FontSize="20"/>
+                                <Button Name="SendFileBtn" Content="发送文件" HorizontalAlignment="Left" Margin="27,149,0,0" VerticalAlignment="Top" Width="92" FontSize="20" Click="SendFileBtn_Click"/>
+
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Viewbox>
+            </Canvas>
+        </Viewbox>
+    </Grid>
+</Window>

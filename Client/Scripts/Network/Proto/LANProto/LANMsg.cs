@@ -38,6 +38,7 @@ namespace LittleSheep
     class LANConnectReplyMsg : MsgBase
     {
         public LANConnectReplyMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
+        public string userName = "";
         public bool permission = true;
     }
 }

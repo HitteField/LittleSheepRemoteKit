@@ -23,6 +23,9 @@ namespace LittleSheep
             //FirewallOperation.NetFwAddPorts("LittleSheepUnicast", 20714, System.Net.Sockets.ProtocolType.Udp);
             FirewallOperation.CreateRule(FirewallOperation.ProtocolType.UDP, "LittleSheepBoardcast", localPorts: 20714);
             FirewallOperation.CreateRule(FirewallOperation.ProtocolType.UDP, "LittleSheepUnicast", localPorts: 20713);
+            FirewallOperation.CreateRule(FirewallOperation.ProtocolType.TCP, "LittleSheepFileModule", localPorts: 20718);
+
+            ConnectionManager.Instance.Init();
         }
 
         public void GlobalDestruct()
@@ -32,6 +35,7 @@ namespace LittleSheep
 
             FirewallOperation.DeleteRule("LittleSheepBoardcast");
             FirewallOperation.DeleteRule("LittleSheepUnicast");
+            FirewallOperation.DeleteRule("LittleSheepFileModule");
 
             UserInformationCache.Default.Save();
         }

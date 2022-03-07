@@ -75,6 +75,7 @@ namespace LittleSheep.XamlWindows
         private void Window_Closed(object sender, EventArgs e)
         {
             RootManager.Instance.GlobalDestruct();
+            Environment.Exit(0);
         }
 
         /// <summary>
@@ -93,6 +94,11 @@ namespace LittleSheep.XamlWindows
             {
                 if(target is DataGridRow)
                 {
+                    if(ConnectionManager.Instance.HasConnected)
+                    {
+                        MessageBox.Show("你已经和一个远程设备连接了！", "提示");
+                        return;
+                    }
                     //双击得到的用户
                     RemoteUser s = (RemoteUser)dataGrid.SelectedItem;
                     LANConnector.Instance.LANConnectRequest(s);

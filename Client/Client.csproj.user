@@ -9,11 +9,23 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="XamlWindows\DuringFileTransfer.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="XamlWindows\FunctionWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="XamlWindows\RecvLANConnectRequestMsgWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="XamlWindows\DuringFileTransfer.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="XamlWindows\FunctionWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="XamlWindows\MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
