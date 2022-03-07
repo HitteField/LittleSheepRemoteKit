@@ -369,8 +369,10 @@ namespace LittleSheep
             if (hasSendRequest)
             {
                 DebugKit.Log("当前已有正在传输的文件");
+                DebugKit.MessageBoxShow("当前已有正在传输的文件", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            DebugKit.MessageBoxShow("已发送传输请求，请等待对方回复", "提示");
             FileSendRequestMsg fileSendRequestMsg = new FileSendRequestMsg();
             fileSendRequestMsg.fileName = fileName;
             fileSendRequestMsg.fileLength = fileLength;
