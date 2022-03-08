@@ -16,5 +16,7 @@ namespace LittleSheep
         private UserInformation() {  }
         public static UserInformation Instance { get { return Nested.instance; } }
         #endregion
+
+        public string sendFilePath = "";
     }
 }

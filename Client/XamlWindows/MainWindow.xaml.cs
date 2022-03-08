@@ -27,19 +27,16 @@ namespace LittleSheep.XamlWindows
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             InitializeComponent();
-            RootManager.Instance.GlobalInit();
 
             //窗口内容初始化
             DebugKit.SetTextBox(debugString);
+
+            RootManager.Instance.GlobalInit();
+
             userNameString.Text = UserInformationCache.Default.UserName;
             LANConnector.Instance.msgHandler.AddMsgListener("LANConnectRequestMsg", OnRecvLANConnectRequestMsg);
             LANConnector.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserListReady, OnLANRemoteUserListReady);
      
-        }
-
-        private void InitLan_Click(object sender, RoutedEventArgs e)
-        {
-            LANConnector.Instance.Initialization();
         }
 
         private void StartRecvBoardcast_Click(object sender, RoutedEventArgs e)
@@ -75,6 +72,7 @@ namespace LittleSheep.XamlWindows
         private void Window_Closed(object sender, EventArgs e)
         {
             RootManager.Instance.GlobalDestruct();
+            Environment.Exit(0);
         }
 
         /// <summary>
@@ -93,6 +91,11 @@ namespace LittleSheep.XamlWindows
             {
                 if(target is DataGridRow)
                 {
+                    if(ConnectionManager.Instance.HasConnected)
+                    {
+                        MessageBox.Show("你已经和一个远程设备连接了！", "提示");
+                        return;
+                    }
                     //双击得到的用户
                     RemoteUser s = (RemoteUser)dataGrid.SelectedItem;
                     LANConnector.Instance.LANConnectRequest(s);

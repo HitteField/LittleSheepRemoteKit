@@ -94,7 +94,7 @@ namespace LittleSheep
         /// <param name="remoteAddresses">远端地址</param>
         /// <param name="remotePorts">远端端口</param>
         /// <returns></returns>
-        public static bool CreateRule(ProtocolType type, string ruleName, string appPath = null, string localAddresses = null, int localPorts = 0, string remoteAddresses = null, int remotePorts = 0)
+        public static bool CreateRule(ProtocolType type, string ruleName, string appPath = null, string localAddresses = null, string localPorts = null, string remoteAddresses = null, string remotePorts = null)
         {
             //创建防火墙策略类的实例
             INetFwPolicy2 policy2 = (INetFwPolicy2)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
@@ -128,7 +128,10 @@ namespace LittleSheep
             }
 
             //为规则添加本地端口
-            rule.LocalPorts = localPorts.ToString(); // "1-29999, 30003-33332, 33334-55554, 55556-60004, 60008-65535";
+            if(!string.IsNullOrEmpty(localPorts))
+            {
+                rule.LocalPorts = localPorts; // "1-29999, 30003-33332, 33334-55554, 55556-60004, 60008-65535";
+            }
 
             //为规则添加远程IP地址
             //if (!string.IsNullOrEmpty(remoteAddresses))
@@ -137,7 +140,7 @@ namespace LittleSheep
             //}
             //为规则添加远程端口
             //rule.RemotePorts = remotePorts.ToString();
-            
+
             //设置规则是阻止还是允许（ALLOW=允许，BLOCK=阻止）
             rule.Action = NET_FW_ACTION_.NET_FW_ACTION_ALLOW;
             //分组 名

@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Text;
 using System.Threading;
 using System.Windows.Threading;
+using System.Windows;
 
 namespace LittleSheep
 {
@@ -62,6 +63,60 @@ namespace LittleSheep
                 textBox.ScrollToEnd();
             }));
             //printDebug.BeginInvoke("[Error]" + debugInformation, null, null);
+        }
+
+        public static MessageBoxResult MessageBoxShow(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon, MessageBoxResult defaultResult, MessageBoxOptions options)
+        {
+            MessageBoxResult result = MessageBoxResult.Yes;
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                result = MessageBox.Show(messageBoxText, caption, button, icon, defaultResult, options);
+            }));
+
+            return result;
+        }
+
+        public static MessageBoxResult MessageBoxShow(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon)
+        {
+            MessageBoxResult result = MessageBoxResult.Yes;
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                result = MessageBox.Show(messageBoxText, caption, button, icon);
+            }));
+
+            return result;
+        }
+
+        public static MessageBoxResult MessageBoxShow(string messageBoxText, string caption, MessageBoxButton button)
+        {
+            MessageBoxResult result = MessageBoxResult.Yes;
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                result = MessageBox.Show(messageBoxText, caption, button);
+            }));
+
+            return result;
+        }
+
+        public static MessageBoxResult MessageBoxShow(string messageBoxText, string caption)
+        {
+            MessageBoxResult result = MessageBoxResult.Yes;
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                result = MessageBox.Show(messageBoxText, caption);
+            }));
+
+            return result;
+        }
+        public static MessageBoxResult MessageBoxShow(string messageBoxText)
+        {
+            MessageBoxResult result = MessageBoxResult.Yes;
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                result = MessageBox.Show(messageBoxText);
+            }));
+
+            return result;
         }
     }
 }
