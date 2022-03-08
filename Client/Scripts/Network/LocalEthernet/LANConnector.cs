@@ -95,7 +95,15 @@ namespace LittleSheep
             {
                 byte[] msgBytes = MsgBase.EncodeToSendBytes(msg);
                 //获取全部本地局域网
-                List<string> EthernetList = NetKit.GetLocalIpAddress(AddressFamily.InterNetwork);
+                List<Tuple<string, string, string>> EthernetList = NetKit.GetLocalNetworkInf();
+                foreach(var ipinf in EthernetList)
+                {
+                    IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(ipinf.Item3), 20714);
+                    broadcastfd.Send(msgBytes, msgBytes.Length, endpoint);
+                    DebugKit.Log("BroadcastMsg has been sent to " + ipinf.Item3);
+                }
+
+                /*List<string> EthernetList = NetKit.GetLocalIpAddress(AddressFamily.InterNetwork);
                 foreach (var ip in EthernetList)
                 {
                     //locateUsers.Add(new RemoteUser(UserInformationCache.Default.UserName, new IPEndPoint(IPAddress.Parse(ip), 0)));
@@ -117,7 +125,7 @@ namespace LittleSheep
                     IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(stringBuilder.ToString()), 20714);
                     broadcastfd.Send(msgBytes, msgBytes.Length, endpoint);
                     DebugKit.Log("BroadcastMsg has been sent to " + stringBuilder.ToString());
-                }
+                }*/
 
                 /*IPEndPoint endpoint = new IPEndPoint(IPAddress.Broadcast, 20714);
                 boardcastfd.Send(msgBytes, msgBytes.Length, endpoint);
