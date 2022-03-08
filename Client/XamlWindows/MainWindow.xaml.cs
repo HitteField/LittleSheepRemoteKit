@@ -27,19 +27,16 @@ namespace LittleSheep.XamlWindows
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             InitializeComponent();
-            RootManager.Instance.GlobalInit();
 
             //窗口内容初始化
             DebugKit.SetTextBox(debugString);
+
+            RootManager.Instance.GlobalInit();
+
             userNameString.Text = UserInformationCache.Default.UserName;
             LANConnector.Instance.msgHandler.AddMsgListener("LANConnectRequestMsg", OnRecvLANConnectRequestMsg);
             LANConnector.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserListReady, OnLANRemoteUserListReady);
      
-        }
-
-        private void InitLan_Click(object sender, RoutedEventArgs e)
-        {
-            LANConnector.Instance.Initialization();
         }
 
         private void StartRecvBoardcast_Click(object sender, RoutedEventArgs e)

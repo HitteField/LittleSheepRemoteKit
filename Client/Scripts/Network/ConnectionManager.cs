@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -63,6 +64,7 @@ namespace LittleSheep
         public void Reset()
         {
             hasConnected = false;
+            hasSendRequest = false;
         }
 
         //--------------------------------局域网报文---------------------------------
@@ -73,7 +75,7 @@ namespace LittleSheep
             if (!hasConnected) return;
             ShutConnectionMsg msg = new ShutConnectionMsg();
             lanConnectorInstance.UnicastMsg(msg, remoteUser);
-            hasConnected = false;
+            Reset();
         }
 
         public void OnRecvShutConnectionMsg(MsgBase msg, object[] obj)
@@ -81,16 +83,40 @@ namespace LittleSheep
             this.Reset();
             DebugKit.MessageBoxShow("对方已主动断开连接", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
             hasConnected = false;
-            
-            App.Current.Dispatcher.Invoke(new Action(delegate
-            {
-                window.Close();
-                window = null;
-            }));
+
+            msgHandler.FireEvent(NetEvent.LANRemoteUserLostConnection);
         }
 
         //--------------------------------------------------------------------------
 
+        #region 聊天模块
+
+        /// <summary>
+        /// 发送聊天内容
+        /// </summary>
+        /// <param name="content">内容</param>
+        public void SendChattingMsg(string content)
+        {
+            ChattingMsg chattingMsg = new ChattingMsg();
+            chattingMsg.sendTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            chattingMsg.content = content;
+            lanConnectorInstance.UnicastMsg(chattingMsg, remoteUser);
+        }
+
+        /// <summary>
+        /// 发送聊天内容
+        /// </summary>
+        /// <param name="content">内容</param>
+        /// <param name="sendTime">发送时间</param>
+        public void SendChattingMsg(string content, string sendTime)
+        {
+            ChattingMsg chattingMsg = new ChattingMsg();
+            chattingMsg.sendTime = sendTime;
+            chattingMsg.content = content;
+            lanConnectorInstance.UnicastMsg(chattingMsg, remoteUser);
+        }
+
+        #endregion
 
         #region 文件传输模块
 
@@ -197,7 +223,7 @@ namespace LittleSheep
                 }
                 while (fileClient.Client.RemoteEndPoint.ToString().Split(':')[0] != remoteUser.endPoint.Address.ToString());
 
-                DebugKit.Log("监听完毕");
+                //DebugKit.Log("监听完毕");
 
                 fileListener.Stop();
                 fileListener = null;
@@ -253,16 +279,19 @@ namespace LittleSheep
             if(File.Exists(savePath))
             {
                 string[] parts = tempFileName.Split('.');
-                parts[parts.Length - 2] += DateTime.Now.ToString("yyyy-MM-dd_HH:mm:ss");
-                savePath = tempFileLength + "\\" + string.Join(".", parts);
+                parts[parts.Length - 2] += DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                savePath = tempFileSavePath + "\\" + string.Join(".", parts);
             }
 
-            XamlWindows.DuringFileTransfer window = null;
+            XamlWindows.DuringFileTransfer fileTransferWindow = null;
             App.Current.Dispatcher.Invoke(new Action(delegate
             {
-                window = new XamlWindows.DuringFileTransfer();
-                window.Tips.Text = "正在接收文件" + UserInformation.Instance.sendFilePath;
-                window.Show();
+                fileTransferWindow = new XamlWindows.DuringFileTransfer();
+                fileTransferWindow.Tips.Text = "正在接收文件" + UserInformation.Instance.sendFilePath;
+                fileTransferWindow.Owner = window;
+                window.fileTransferWindow = fileTransferWindow;
+                fileTransferWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                fileTransferWindow.Show();
             }));
 
             try
@@ -275,7 +304,7 @@ namespace LittleSheep
                 FileStream fileStream = new FileStream(savePath, FileMode.CreateNew, FileAccess.Write);
                 int fileReadSize = 0;
                 long fileLength = 0;
-                byte[] buffer = new byte[2048];
+                byte[] buffer = new byte[8192];
                 while (fileLength < tempFileTrueLength) 
                 {
                     fileReadSize = networkStream.Read(buffer, 0, buffer.Length);
@@ -284,8 +313,8 @@ namespace LittleSheep
 
                     App.Current.Dispatcher.Invoke(new Action(delegate
                     {
-                        window.ProgressBar.Value = (double)fileLength / tempFileTrueLength * 100;
-                        window.FileTransferRatio.Text = $"{fileLength}B/{tempFileTrueLength}B 已接收";
+                        fileTransferWindow.ProgressBar.Value = (double)fileLength / tempFileTrueLength * 100;
+                        fileTransferWindow.FileTransferRatio.Text = $"{fileLength}B/{tempFileTrueLength}B 已接收";
                     }));
                 }
                 fileStream.Flush();
@@ -294,8 +323,12 @@ namespace LittleSheep
 
                 App.Current.Dispatcher.Invoke(new Action(delegate
                 {
-                    window.Close();
+                    fileTransferWindow.Close();
                 }));
+
+                DebugKit.MessageBoxShow($"接收文件{tempFileName}完成", "提示");
+
+                msgHandler.FireEvent(NetEvent.FileRecvFinish);
 
             }
             catch(Exception ex)
@@ -303,19 +336,20 @@ namespace LittleSheep
                 DebugKit.Error("[RecvFileThread]" + ex.Message);
                 DebugKit.MessageBoxShow("接收文件出现异常，已停止接收文件。\n错误信息：" + ex.Message, "错误");
             }
-
-            DebugKit.MessageBoxShow($"接收文件{tempFileName}完成", "提示");
-            
+      
         }
 
         private void SendFileThread()
         {
-            XamlWindows.DuringFileTransfer window = null;
+            XamlWindows.DuringFileTransfer fileTransferWindow = null;
             App.Current.Dispatcher.Invoke(new Action(delegate
             {
-                window = new XamlWindows.DuringFileTransfer();
-                window.Tips.Text = "正在发送文件" + UserInformation.Instance.sendFilePath;
-                window.Show();
+                fileTransferWindow = new XamlWindows.DuringFileTransfer();
+                fileTransferWindow.Tips.Text = "正在发送文件" + UserInformation.Instance.sendFilePath;
+                fileTransferWindow.Owner = window;
+                window.fileTransferWindow = fileTransferWindow;
+                fileTransferWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                fileTransferWindow.Show();
             }));
 
             try
@@ -326,15 +360,15 @@ namespace LittleSheep
                 long fileLength = 0;
                 while (fileLength < fileStream.Length)
                 {
-                    byte[] buffer = new byte[2048];
+                    byte[] buffer = new byte[8192];
                     fileReadSize = fileStream.Read(buffer, 0, buffer.Length);
                     networkStream.Write(buffer, 0, fileReadSize);
                     fileLength += fileReadSize;
 
                     App.Current.Dispatcher.Invoke(new Action(delegate
                     {
-                        window.ProgressBar.Value = (double)fileLength / fileStream.Length * 100;
-                        window.FileTransferRatio.Text = $"{fileLength}B/{fileStream.Length}B 已发送";
+                        fileTransferWindow.ProgressBar.Value = (double)fileLength / fileStream.Length * 100;
+                        fileTransferWindow.FileTransferRatio.Text = $"{fileLength}B/{fileStream.Length}B 已发送";
                     }));
                 }
                 fileStream.Flush();
@@ -343,15 +377,19 @@ namespace LittleSheep
 
                 App.Current.Dispatcher.Invoke(new Action(delegate
                 {
-                    window.Close();
+                    fileTransferWindow.Close();
                 }));
+
+                DebugKit.MessageBoxShow($"发送文件完成", "提示");
+
+                msgHandler.FireEvent(NetEvent.FileSendFinish);
             }
             catch (Exception ex)
             {
                 DebugKit.Error("[SendFileThread]" + ex.Message);
                 DebugKit.MessageBoxShow("发送文件出现异常，已停止发送文件。\n错误信息：" + ex.Message, "错误");
             }
-            DebugKit.MessageBoxShow($"发送文件完成", "提示");
+            
             //在接收完成后需要设置标识符
             hasSendRequest = false;
         }
@@ -372,7 +410,6 @@ namespace LittleSheep
                 DebugKit.MessageBoxShow("当前已有正在传输的文件", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            DebugKit.MessageBoxShow("已发送传输请求，请等待对方回复", "提示");
             FileSendRequestMsg fileSendRequestMsg = new FileSendRequestMsg();
             fileSendRequestMsg.fileName = fileName;
             fileSendRequestMsg.fileLength = fileLength;
@@ -381,6 +418,7 @@ namespace LittleSheep
             {
                 lanConnectorInstance.UnicastMsg(fileSendRequestMsg, remoteUser);
                 hasSendRequest = true;
+                DebugKit.MessageBoxShow("已发送传输请求，请等待对方回复", "提示");
             }
             catch (Exception ex)
             {
@@ -406,17 +444,54 @@ namespace LittleSheep
                 tempFileName = fileSendRequestMsg.fileName;
                 tempFileLength = fileSendRequestMsg.fileLength;
                 tempFileTrueLength = fileSendRequestMsg.fileTrueLength;
-                //需要开始准备接收文件字节流
-                System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog();
-                dialog.Description = "请选择文件保存位置";
-                if(dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+
+                //弹出选择文件夹窗口
+                try
                 {
-                    if(string.IsNullOrEmpty(dialog.SelectedPath))
+                    App.Current.Dispatcher.Invoke(new Action(delegate
+                    {
+                        CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+                        dialog.IsFolderPicker = true;
+                        dialog.Title = "请选择文件保存位置";
+                        dialog.Multiselect = false;
+                        dialog.InitialDirectory = UserInformationCache.Default.LastFileSavePath;
+                        if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                        {
+                            if (string.IsNullOrEmpty(dialog.FileName))
+                            {
+                                DebugKit.MessageBoxShow("文件夹的路径不能为空\n已取消接收文件", "提示");
+                                fileSendReplyMsg.permission = false;
+                            }
+                            tempFileSavePath = dialog.FileName;
+                            UserInformationCache.Default.LastFileSavePath = dialog.FileName;
+
+                            //启动接收文件
+                            msgHandler.FireEvent(NetEvent.FileRecvStart);
+                        }
+                        else
+                        {
+                            DebugKit.MessageBoxShow("已取消接收文件", "提示");
+                            fileSendReplyMsg.permission = false;
+                        }
+                    }));
+                }
+                catch(Exception ex)
+                {
+                    DebugKit.MessageBoxShow("弹出文件夹选择框失败:" + ex.Message, "提示", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                /*System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog();
+                dialog.Description = "请选择文件保存位置";
+                dialog.SelectedPath = UserInformationCache.Default.LastFileSavePath;
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    if (string.IsNullOrEmpty(dialog.SelectedPath))
                     {
                         DebugKit.MessageBoxShow("文件夹的路径不能为空\n已取消接收文件", "提示");
                         fileSendReplyMsg.permission = false;
                     }
                     tempFileSavePath = dialog.SelectedPath;
+                    UserInformationCache.Default.LastFileSavePath = dialog.SelectedPath;
 
                     //启动接收文件
                     msgHandler.FireEvent(NetEvent.FileRecvStart);
@@ -425,7 +500,7 @@ namespace LittleSheep
                 {
                     DebugKit.MessageBoxShow("已取消接收文件", "提示");
                     fileSendReplyMsg.permission = false;
-                }
+                }*/
             }
 
             //把报文发出去
@@ -458,6 +533,7 @@ namespace LittleSheep
             else
             {
                 DebugKit.MessageBoxShow("对方拒绝了文件传输请求","太逊了");
+                hasSendRequest = false;
             }
         }
 

@@ -21,11 +21,17 @@ namespace LittleSheep
         LANAcceptConnectRequest,
         //远程主机发来了同意本机连接请求的消息
         LANRecvAcceptConnectRequest,
+        //远程主机关闭了连接
+        LANRemoteUserLostConnection,
 
         //开始传输文件
         FileSendStart = 20,
         //开始接收文件
-        FileRecvStart
+        FileRecvStart,
+        //发送文件完成
+        FileSendFinish,
+        //接收文件完成
+        FileRecvFinish
     }
     /// <summary>
     /// 网络模块事件注册管理

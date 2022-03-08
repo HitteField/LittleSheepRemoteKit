@@ -27,8 +27,21 @@ namespace LittleSheep
         public bool permission = false;
     }
 
+    /// <summary>
+    /// 主动关闭报文
+    /// </summary>
     public class ShutConnectionMsg:MsgBase
     {
         public ShutConnectionMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
+    }
+
+    /// <summary>
+    /// 对话内容
+    /// </summary>
+    public class ChattingMsg:MsgBase
+    { 
+        public ChattingMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
+        public string sendTime = "";        //发送时的本地时间
+        public string content = "";         //发送的内容
     }
 }

@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:LittleSheep.XamlWindows"
         mc:Ignorable="d"
         Title="正在传输" Height="300" Width="600"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        Closed="Window_Closed">
     <Grid>
         <ProgressBar Name="ProgressBar" HorizontalAlignment="Center" Height="36"  VerticalAlignment="Center" Width="480" Margin="56,188,56,45"/>
         <TextBlock Name="FileTransferRatio" HorizontalAlignment="Left" Margin="56,160,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" FontSize="18" Width="480"/>

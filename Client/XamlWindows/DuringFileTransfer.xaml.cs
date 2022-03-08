@@ -22,6 +22,21 @@ namespace LittleSheep.XamlWindows
         public DuringFileTransfer()
         {
             InitializeComponent();
+
+            ConnectionManager.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserLostConnection, OnLostConnection);
+        }
+
+        private void OnLostConnection(string err)
+        {
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                Close();
+            }));
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+
         }
     }
 }

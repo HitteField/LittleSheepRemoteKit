@@ -34,5 +34,17 @@ namespace LittleSheep {
                 this["UserName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastFileSavePath {
+            get {
+                return ((string)(this["LastFileSavePath"]));
+            }
+            set {
+                this["LastFileSavePath"] = value;
+            }
+        }
     }
 }

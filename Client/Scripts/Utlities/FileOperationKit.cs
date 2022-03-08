@@ -18,13 +18,13 @@ namespace LittleSheep
         {
 
             if (lengthOfFile < 1024)
-                return string.Format(lengthOfFile.ToString() + 'B');
+                return string.Format(lengthOfFile.ToString("f2") + 'B');
             else if (lengthOfFile > 1024 && lengthOfFile <= Math.Pow(1024, 2))
-                return string.Format((lengthOfFile / 1024.0).ToString() + "KB");
+                return string.Format((lengthOfFile / 1024.0).ToString("f2") + "KB");
             else if (lengthOfFile > Math.Pow(1024, 2) && lengthOfFile <= Math.Pow(1024, 3))
-                return string.Format((lengthOfFile / 1024.0 / 1024.0).ToString() + "MB");
+                return string.Format((lengthOfFile / 1024.0 / 1024.0).ToString("f2") + "MB");
             else
-                return string.Format((lengthOfFile / 1024.0 / 1024.0 / 1024.0).ToString() + "GB");
+                return string.Format((lengthOfFile / 1024.0 / 1024.0 / 1024.0).ToString("f2") + "GB");
         }
 
         /// <summary>
