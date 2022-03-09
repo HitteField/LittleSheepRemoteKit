@@ -31,7 +31,7 @@
                                 <Button Name="SendFileBtn" Content="发送文件" HorizontalAlignment="Left" Margin="1012,89,0,0" VerticalAlignment="Top" Width="92" FontSize="20" Click="SendFileBtn_Click">
                                 </Button>
                                 <RichTextBox Name="ChattingDisplayer" VerticalScrollBarVisibility="Visible" HorizontalAlignment="Left" Height="356" Margin="27,169,0,0" VerticalAlignment="Top" Width="1077" FontSize="16" IsReadOnly="True" AcceptsReturn="True" AcceptsTab="True"/>
-                                <TextBox Name="ChattingSender" HorizontalAlignment="Left" Height="79" Margin="27,530,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="980" FontSize="16" IsReadOnly="False" AcceptsTab="True" KeyDown="ChattingSender_KeyDown">
+                                <TextBox Name="ChattingSender" MaxLength="500" HorizontalAlignment="Left" Height="79" Margin="27,530,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="980" FontSize="16" IsReadOnly="False" AcceptsTab="True" KeyDown="ChattingSender_KeyDown">
                                     <TextBox.Resources>
                                         <VisualBrush x:Key="HintText" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left" AlignmentY="Top">
                                             <VisualBrush.Visual>

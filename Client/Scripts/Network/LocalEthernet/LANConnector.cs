@@ -155,7 +155,7 @@ namespace LittleSheep
             return result > 0;
         }
 
-        public void BroadcastReceive()
+        private void BroadcastReceive()
         {
             broadcastRecvfd = new UdpClient(new IPEndPoint(IPAddress.Any, 20714));
             DebugKit.Log("broadcastRecvfd has bound to 20714");
@@ -176,7 +176,7 @@ namespace LittleSheep
             }
         }
 
-        public void UnicastReceive()
+        private void UnicastReceive()
         {
             UdpClient unicastRecvfd = new UdpClient(new IPEndPoint(IPAddress.Any, 20713));
             DebugKit.Log("unicastRecvfd has bound to 20713");

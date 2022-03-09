@@ -43,8 +43,22 @@ namespace LittleSheep
         /// </summary>
         public RemoteUser remoteUser { get; set; }
 
+        /// <summary>
+        /// 是否已经连接上
+        /// </summary>
         private bool hasConnected = false;
         public bool HasConnected => hasConnected;
+
+        /// <summary>
+        /// 是接收者（被控制端）
+        /// </summary>
+        private bool isRecver = false;
+        /// <summary>
+        /// 是发送者（控制端）
+        /// </summary>
+        private bool isSender = false;
+        public bool IsRecver => isRecver;
+        public bool IsSender => isSender;
 
         /// <summary>
         /// 打开的功能页窗口
@@ -65,6 +79,10 @@ namespace LittleSheep
         {
             hasConnected = false;
             hasSendRequest = false;
+            isRecver = false;
+            isSender = false;
+            isAbortFileTransfer = false;
+            isTransfering = false;
         }
 
         //--------------------------------局域网报文---------------------------------
@@ -135,11 +153,11 @@ namespace LittleSheep
         /// <summary>
         /// 上一次收到的文件发送请求里表述的文件名和文件大小
         /// </summary>
-        string tempFileName = "empty.txt", tempFileLength = "0B";
+        public string tempFileName = "empty.txt", tempFileLength = "0B";
         /// <summary>
         /// 文件的保存位置
         /// </summary>
-        string tempFileSavePath = "";
+        public string tempFileSavePath = "";
         /// <summary>
         /// 上一次收到的文件发送请求里表述的文件真实大小
         /// </summary>
@@ -159,6 +177,7 @@ namespace LittleSheep
 
             lanConnectorInstance.msgHandler.AddMsgListener("FileSendRequestMsg", OnRecvFileSendRequestMsg);
             lanConnectorInstance.msgHandler.AddMsgListener("FileSendReplyMsg", OnRecvFileSendReplyMsg);
+            lanConnectorInstance.msgHandler.AddMsgListener("FileTransferStopMsg", OnRecvFileTransferStopMsg);
 
             fileModuleHasInit = true;
         }
@@ -169,6 +188,7 @@ namespace LittleSheep
         /// <param name="err"></param>
         private void OnAcceptConnectRequest(string err)
         {
+            isRecver = true;
             App.Current.Dispatcher.Invoke(new Action(delegate
             {
                 window = new XamlWindows.FunctionWindow();
@@ -188,6 +208,7 @@ namespace LittleSheep
         /// <param name="err"></param>
         private void OnRecvAcceptConnectRequest(string err)
         {
+            isSender = true;
             App.Current.Dispatcher.Invoke(new Action(delegate
             {
                 window = new XamlWindows.FunctionWindow();
@@ -235,6 +256,10 @@ namespace LittleSheep
             }
         }
 
+        Thread recvThread = null;
+        Thread sendThread = null;
+        bool isAbortFileTransfer = false;
+        bool isTransfering = false;
         /// <summary>
         /// 开始接收文件
         /// </summary>
@@ -247,10 +272,10 @@ namespace LittleSheep
                 return;
             }
 
-            Thread thread = new Thread(RecvFileThread);
-            thread.IsBackground = true;
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
+            recvThread = new Thread(RecvFileThread);
+            recvThread.IsBackground = true;
+            recvThread.SetApartmentState(ApartmentState.STA);
+            recvThread.Start();
         }
 
         /// <summary>
@@ -265,14 +290,16 @@ namespace LittleSheep
                 return;
             }
 
-            Thread thread = new Thread(SendFileThread);
-            thread.IsBackground = true;
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
+            sendThread = new Thread(SendFileThread);
+            sendThread.IsBackground = true;
+            sendThread.SetApartmentState(ApartmentState.STA);
+            sendThread.Start();
         }
 
         private void RecvFileThread()
         {
+            isTransfering = true;
+
             string savePath = tempFileSavePath + "\\" + tempFileName;
 
             //如果此文件已存在
@@ -307,6 +334,20 @@ namespace LittleSheep
                 byte[] buffer = new byte[8192];
                 while (fileLength < tempFileTrueLength) 
                 {
+                    if(isAbortFileTransfer)
+                    {
+                        isAbortFileTransfer = false;
+                        fileStream.Flush();
+                        fileStream.Close();
+                        networkStream.Flush();
+                        App.Current.Dispatcher.Invoke(new Action(delegate
+                        {
+                            fileTransferWindow.Close();
+                        }));
+                        isTransfering = false;
+                        return;
+                    }
+
                     fileReadSize = networkStream.Read(buffer, 0, buffer.Length);
                     fileLength += fileReadSize;
                     fileStream.Write(buffer, 0, fileReadSize);
@@ -321,11 +362,6 @@ namespace LittleSheep
                 fileStream.Close();
                 networkStream.Flush();
 
-                App.Current.Dispatcher.Invoke(new Action(delegate
-                {
-                    fileTransferWindow.Close();
-                }));
-
                 DebugKit.MessageBoxShow($"接收文件{tempFileName}完成", "提示");
 
                 msgHandler.FireEvent(NetEvent.FileRecvFinish);
@@ -336,11 +372,14 @@ namespace LittleSheep
                 DebugKit.Error("[RecvFileThread]" + ex.Message);
                 DebugKit.MessageBoxShow("接收文件出现异常，已停止接收文件。\n错误信息：" + ex.Message, "错误");
             }
-      
+
+            isTransfering = false;
         }
 
         private void SendFileThread()
         {
+            isTransfering = true;
+
             XamlWindows.DuringFileTransfer fileTransferWindow = null;
             App.Current.Dispatcher.Invoke(new Action(delegate
             {
@@ -360,6 +399,21 @@ namespace LittleSheep
                 long fileLength = 0;
                 while (fileLength < fileStream.Length)
                 {
+                    if (isAbortFileTransfer)
+                    {
+                        isAbortFileTransfer = false;
+                        fileStream.Flush();
+                        fileStream.Close();
+                        networkStream.Flush();
+                        App.Current.Dispatcher.Invoke(new Action(delegate
+                        {
+                            fileTransferWindow.Close();
+                        }));
+                        hasSendRequest = false;
+                        isTransfering = false;
+                        return;
+                    }
+
                     byte[] buffer = new byte[8192];
                     fileReadSize = fileStream.Read(buffer, 0, buffer.Length);
                     networkStream.Write(buffer, 0, fileReadSize);
@@ -375,11 +429,6 @@ namespace LittleSheep
                 networkStream.Flush();
                 fileStream.Close();
 
-                App.Current.Dispatcher.Invoke(new Action(delegate
-                {
-                    fileTransferWindow.Close();
-                }));
-
                 DebugKit.MessageBoxShow($"发送文件完成", "提示");
 
                 msgHandler.FireEvent(NetEvent.FileSendFinish);
@@ -392,6 +441,7 @@ namespace LittleSheep
             
             //在接收完成后需要设置标识符
             hasSendRequest = false;
+            isTransfering = false;
         }
 
         // --------------------------------文件传输局域网报文-----------------------------------
@@ -404,7 +454,7 @@ namespace LittleSheep
         /// </summary>
         public void FileSendRequest(string fileName, string fileLength,long fileTrueLength)
         {
-            if (hasSendRequest)
+            if (hasSendRequest || isTransfering)
             {
                 DebugKit.Log("当前已有正在传输的文件");
                 DebugKit.MessageBoxShow("当前已有正在传输的文件", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -536,6 +586,25 @@ namespace LittleSheep
                 hasSendRequest = false;
             }
         }
+
+        /// <summary>
+        /// 停止发送报文
+        /// </summary>
+        public void FileTransferStop()
+        {
+            if (!isTransfering) return;
+
+            FileTransferStopMsg msg = new FileTransferStopMsg();
+            lanConnectorInstance.UnicastMsg(msg, remoteUser);
+            window.OnRecvFileTransferStopMsg(msg, null);
+        }
+
+        public void OnRecvFileTransferStopMsg(MsgBase msg,object[] args)
+        {
+            isAbortFileTransfer = true;
+            DebugKit.MessageBoxShow("对方已停止文件的传输", "提示");
+        }
+        
 
         // -----------------------------------------------------------------------------------
 
