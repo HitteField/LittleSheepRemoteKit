@@ -100,7 +100,7 @@ namespace LittleSheep
                 {
                     IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(ipinf.Item3), 20714);
                     broadcastfd.Send(msgBytes, msgBytes.Length, endpoint);
-                    DebugKit.Log("BroadcastMsg has been sent to " + ipinf.Item3);
+                    //DebugKit.Log("BroadcastMsg has been sent to " + ipinf.Item3);
                 }
 
                 /*List<string> EthernetList = NetKit.GetLocalIpAddress(AddressFamily.InterNetwork);
@@ -205,6 +205,11 @@ namespace LittleSheep
         }
 
         #region 具体连接步骤
+
+        Timer connectRequestTimer = null;
+        bool hasRecvConnectReply = false;
+        const int connectTimeOutLimit = 7500;           
+
         public bool LANProbeRequest()
         {
             //remoteUsers.Clear();
@@ -223,6 +228,8 @@ namespace LittleSheep
             try
             {
                 UnicastMsg(connectRequestMsg, remoteUser);
+                hasRecvConnectReply = false;
+                connectRequestTimer = new Timer(LANConnectRequestTimeOut, null, connectTimeOutLimit, Timeout.Infinite);
                 return true;
             }
             catch (Exception ex)
@@ -230,6 +237,16 @@ namespace LittleSheep
                 DebugKit.Warning("[LANConnectRequest]" + ex.Message);
                 return false;
             }
+        }
+
+        private void LANConnectRequestTimeOut(object state)
+        {
+            if(!hasRecvConnectReply)
+            {
+                DebugKit.MessageBoxShow("申请连接的对方无响应，可以尝试重新发送连接请求。", "提示");
+            }
+
+            if (connectRequestTimer!=null) connectRequestTimer.Dispose();
         }
 
         public bool LANConnectReply(RemoteUser remoteUser, bool isAgree)
@@ -337,6 +354,7 @@ namespace LittleSheep
         {
             LANConnectReplyMsg connectReplyMsg = (LANConnectReplyMsg)msg;
             //DebugKit.Log("Recv LANConnectReplyMsg with result:" + connectReplyMsg.permission.ToString());
+            hasRecvConnectReply = true;
 
             //如果对方同意，便需要开始连接
             if (connectReplyMsg.permission == true)

@@ -21,6 +21,7 @@ namespace LittleSheep.XamlWindows
     public partial class FunctionWindow : Window
     {
         public DuringFileTransfer fileTransferWindow = null;
+        MediaPlayer mediaPlayer = null;
         public FunctionWindow()
         {
             InitializeComponent();
