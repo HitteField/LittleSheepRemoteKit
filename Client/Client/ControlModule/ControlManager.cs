@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LittleSheep
+namespace LittleSheep.ControlModule
 {
-    enum InputEnum
+    /// <summary>
+    /// 控制键位
+    /// https://docs.microsoft.com/zh-cn/windows/win32/inputdev/virtual-key-codes
+    /// </summary>
+    enum ControlCode
     {
         //鼠标左键,
         VK_LBUTTON = 1,
@@ -18,8 +22,9 @@ namespace LittleSheep
         VK_MBUTTON = 4,
         VK_XBUTTON1 = 5,
         VK_XBUTTON2 = 6,
-        VK_BACK = 8, //Backspace
-                     //Tab
+        //Backspace
+        VK_BACK = 8,
+        //Tab
         VK_TAB = 9,
         //Clear
         VK_CLEAR = 12,
@@ -227,7 +232,7 @@ namespace LittleSheep
         ////大键盘- _
         VK_OEM_MINUS = 189,
         VK_OEM_PERIOD = 190,
-        //大键盘/ ?
+        //大键盘/ ? 
         VK_OEM_2 = 191,
         //大键盘 ` ~
         VK_OEM_3 = 192,
@@ -253,6 +258,32 @@ namespace LittleSheep
         VK_PA1 = 253,
         VK_OEM_CLEAR = 254
     }
+
+    /// <summary>
+    /// 控制键位状态
+    /// </summary>
+    enum ControlStatus
+    {
+        DOWN = 0,
+        UP = 2,
+    }
+
+    class ControlMSG
+    {
+        /// <summary>
+        /// 构造控制信息
+        /// </summary>
+        /// <param name="bVk">枚举类型ControlCode，表示控制的键位</param>
+        /// <param name="stutus">枚举类型ControlStatus,表示控制键位的状态</param>
+        /// <returns>返回要发送的控制信息字节流,两个字节，第一个字节表示键位，第二字节表示状态</returns>
+        public static byte[] GetControlMSG(ControlCode bVk, ControlStatus stutus) {
+            byte[] msg = new byte[2];
+            msg[0] = (byte)bVk;
+            msg[1] = (byte)stutus;
+            return msg;
+        }
+    }
+
     class ControlManager
     {
         #region 单例类构造函数
@@ -263,5 +294,37 @@ namespace LittleSheep
         private ControlManager() { }
         public static ControlManager Instance { get { return Nested.instance; } }
         #endregion
+
+        [DllImport("user32.dll", EntryPoint = "keybd_event")]
+        ///第一个参数(bVk)是键码(InputCode)，第二个和第四个填0即可，第三个代表是按下按键还是松开，0表示按下，2表示松开(InputStatus)。
+        public static extern void keybd_event(byte bVk, byte bScan, int dwFlags, int dwExtraInfo);
+
+        /// <summary>
+        /// 设置传入的控制信息
+        /// </summary>
+        /// <param name="controlMSG">两个字节的控制信息</param>
+        /// <returns>true：操作成功, false：控制信息有误</returns>
+        public static bool ControlInput(byte[] controlMSG) {
+            if(controlMSG.Length == 2 && controlMSG[0] >= 1 && controlMSG[0] <= 254 && (controlMSG[1] == 0 || controlMSG[1] == 2)) {
+                ControlCode cCode = (ControlCode)controlMSG[0];
+                ControlStatus cStatus = (ControlStatus)controlMSG[1];
+                keybd_event((byte)cCode, 0, (byte)cStatus, 0);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        public delegate void ControlMsgHandler(byte[] msg);
+
+        public event ControlMsgHandler ControlEvent;
+
+        /// <summary>
+        /// 开始监听，订阅事件
+        /// </summary>
+        public void start() {
+
+        }
+
     }
 }
