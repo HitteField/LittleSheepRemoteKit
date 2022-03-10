@@ -11,7 +11,7 @@ namespace LittleSheep.ControlModule
     /// 控制键位
     /// https://docs.microsoft.com/zh-cn/windows/win32/inputdev/virtual-key-codes
     /// </summary>
-    enum ControlCode
+    enum KeyboardCode
     {
         //鼠标左键,
         VK_LBUTTON = 1,
@@ -263,10 +263,15 @@ namespace LittleSheep.ControlModule
     /// <summary>
     /// 控制键位状态
     /// </summary>
-    enum ControlStatus
+    enum KeyStatus
     {
         DOWN = 0,
         UP = 2,
+    }
+
+    enum MouseState
+    {
+
     }
 
     class ControlMSG
@@ -277,11 +282,15 @@ namespace LittleSheep.ControlModule
         /// <param name="bVk">枚举类型ControlCode，表示控制的键位</param>
         /// <param name="stutus">枚举类型ControlStatus,表示控制键位的状态</param>
         /// <returns>返回要发送的控制信息字节流,两个字节，第一个字节表示键位，第二字节表示状态</returns>
-        public static byte[] GetControlMSG(ControlCode bVk, ControlStatus stutus) {
+        public static byte[] GetKeyMsgByte(KeyboardCode bVk, KeyStatus status) {
             byte[] msg = new byte[2];
             msg[0] = (byte)bVk;
-            msg[1] = (byte)stutus;
+            msg[1] = (byte)status;
             return msg;
+        }
+
+        public static byte[] GetMouseMsgByte(MouseCode bvk, MouseState status) {
+
         }
     }
 
@@ -330,292 +339,8 @@ namespace LittleSheep.ControlModule
     }
 
     /// <summary>
-    /// 用来监听鼠标事件
+    /// 监听键盘事件
     /// </summary>
-    class MouseHook
-    {
-
-        #region 单例类
-        class danli
-        {
-            static internal readonly MouseHook instance = new MouseHook();
-        }
-        private MouseHook() {
-        }
-        public static MouseHook Instance { get { return danli.instance; } }
-        #endregion
-
-        #region 定义钩子
-
-
-        private int _hook = 0;
-        public int hHook { get { return _hook; } }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="nCode">挂钩过程用于确定如何处理消息的代码。如果小于零，则挂钩过程必须将消息传递给 CallNextHookEx 函数而不进行进一步处理，
-        /// 并且应该返回 CallNextHookEx 返回的值。若为0，则wParam和lParameter包含鼠标的信息。</param>
-        /// <param name="wParam">鼠标的识别信息，包含WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE, 
-        /// WM_MOUSEWHEEL, WM_MOUSEHWHEEL, WM_RBUTTONDOWN, or WM_RBUTTONUP.</param>
-        /// <param name="lParam">指向一个MSLLHOOKSTRUCT结构的指针.</param>
-        /// <returns>如果nCode小于零，则挂钩程序必须返回 CallNextHookEx返回的值。
-        /// 如果nCode大于等于0，并且hook过程没有处理该消息，强烈建议调用CallNextHookEx并返回它返回的值；
-        /// 否则，其他安装了WH_MOUSE_LL挂钩的应用程序将不会收到挂钩通知，因此可能会出现错误行为。
-        /// 如果钩子过程处理了消息，它可能会返回一个非零值，以防止系统将消息传递给钩子链的其余部分或目标窗口过程。</returns>
-        public delegate int LowLevelMouseHookProcHandler(int nCode, UIntPtr wParam, IntPtr lParam);
-        //定义钩子句柄
-        //定义钩子类型
-        private const int WH_MOUSE_LL = 14;// 低级鼠标钩子
-
-
-        /// <summary>
-        /// 安装钩子开始监听
-        /// </summary>
-        /// <param name="idHook">低级鼠标钩子14</param>
-        /// <param name="lpfn">自己定义的钩子的消息处理方法(对应我们前面定义的委托)指向挂钩过程的指针。 
-        /// 如果dwThreadId参数为零或指定由不同进程创建的线程的标识符，则lpfn参数必须指向DLL中的挂钩过程。 
-        /// 否则，lpfn可以指向与当前进程关联的代码中的挂钩过程。</param>
-        /// <param name="hmod">模块的句柄，在本机代码中，对应dll的句柄(可在dll的入口函数中获取)；而我们是托管代码
-        /// 包含lpfn参数指向的钩子函数的DLL句柄。如果dwThreadId参数指定由当前进程创建的线程并且挂钩过程在与当前进程关联的代码内,
-        /// 则hMod参数必须设置为 NULL。</param>
-        /// <param name="dwThreadId">线程Id，传入0则为全局所有线程，否则传入特定的线程Id
-        /// 与挂钩过程关联的线程的标识符。对于桌面应用程序，如果此参数为零，则挂钩过程与在与调用线程相同的桌面中运行的所有现有线程相关联。</param>
-        /// <returns>返回hook函数的句柄，否则返回空</returns>
-        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        private static extern int SetWindowsHookEx(int idHook, LowLevelMouseHookProcHandler lpfn, IntPtr hmod, int dwThreadId);
-
-
-        /// <summary>
-        /// 卸载钩子
-        /// </summary>
-        /// <param name="idHook">钩子对应的序号</param>
-        /// <returns>返回是否成功销毁</returns>
-        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool UnhookWindowsHookEx(int idHook);
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="idHook">忽略</param>
-        /// <param name="nCode">传递给当前钩子过程的钩子代码。下一个钩子函数使用此代码来确定如何处理钩子信息。</param>
-        /// <param name="wParam"></param>
-        /// <param name="lParam"></param>
-        /// <returns></returns>
-        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        private static extern int CallNextHookEx(int idHook, int nCode, UIntPtr wParam, IntPtr lParam);
-
-
-        [StructLayout(LayoutKind.Sequential)]
-        public class POINT
-        {
-            public int x;
-            public int y;
-        }
-
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MSLLHOOKSTRUCT
-        {
-            /// <summary>
-            /// 光标的x，y坐标
-            /// </summary>
-            public POINT pt;
-            /// <summary>
-            /// 如果消息是WM_MOUSEWHEEL，则高位两字节是滚动变化量。低位两字节无用。
-            /// 正值表示滚轮向前旋转，远离用户；负值表示轮子向后旋转，朝向用户。滚轮点击定义为WHEEL_DELTA，即 120。
-            /// 如果消息是WM_XBUTTONDOWN、WM_XBUTTONUP、WM_XBUTTONDBLCLK、WM_NCXBUTTONDOWN、WM_NCXBUTTONUP或WM_NCXBUTTONDBLCLK，
-            /// 则高位字指定按下或释放哪个 X 按钮，而低位字被保留。该值可以是1：第一个xbuttom，2：第二个xbuttom。否则， 不使用mouseData 。
-            /// </summary>
-            public int mouseData;
-            public int flags;
-            /// <summary>
-            /// 事件的时间戳
-            /// </summary>
-            public int time;
-            /// <summary>
-            /// 事件的额外信息
-            /// </summary>
-            public int dwExtraInfo;
-        }
-
-        #endregion
-
-        enum MOUSEGETEVENT
-        {
-            /// <summary>
-            /// 按下鼠标左键
-            /// </summary>
-            WM_LBUTTONDOWN = 0x0201,
-            /// <summary>
-            /// 松开鼠标左键
-            /// </summary>
-            WM_LBUTTONUP = 0x0202,
-            /// <summary>
-            /// 鼠标移动
-            /// </summary>
-            WM_MOUSEMOVE = 0x0200,
-            /// <summary>
-            /// 鼠标滚轮滚动
-            /// </summary>
-            WM_MOUSEWHEEL = 0x020A,
-            /// <summary>
-            /// 水平滚轮
-            /// </summary>
-            WM_MOUSEHWHEEL = 0x020E,
-            /// <summary>
-            /// 按下鼠标右键
-            /// </summary>
-            WM_RBUTTONDOWN = 0x0204,
-            /// <summary>
-            /// 松开鼠标右键
-            /// </summary>
-            WM_RBUTTONUP = 0x0205
-        }
-
-        private int MouseHookProc(int nCode, UIntPtr wParam, IntPtr lParam) {
-            MSLLHOOKSTRUCT MyMouseHookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
-            MOUSEGETEVENT mouseEventIdenti = (MOUSEGETEVENT)wParam;
-            if(nCode < 0) {
-                return CallNextHookEx(hHook, nCode, wParam, lParam);
-            } else {
-                switch(mouseEventIdenti) {
-                    case MOUSEGETEVENT.WM_LBUTTONDOWN:
-                        // 鼠标左键按下
-                        MouseLButtonDown();
-                        break;
-                    case MOUSEGETEVENT.WM_LBUTTONUP:
-                        // 鼠标左键松开
-                        MouseLButtonUp();
-                        break;
-                    case MOUSEGETEVENT.WM_MOUSEWHEEL:
-                        // 滚轮移动
-                        MouseWheel(MyMouseHookStruct.mouseData);
-                        break;
-                    case MOUSEGETEVENT.WM_MOUSEHWHEEL:
-                        // 滚轮水平移动
-                        MouseHWheel();
-                        break;
-                    case MOUSEGETEVENT.WM_MOUSEMOVE:
-                        // 鼠标移动
-                        MouseMove(MyMouseHookStruct.pt.x, MyMouseHookStruct.pt.y);
-                        break;
-                    case MOUSEGETEVENT.WM_RBUTTONDOWN:
-                        // 鼠标右键按下
-                        MouseRButtonDown();
-                        break;
-                    case MOUSEGETEVENT.WM_RBUTTONUP:
-                        //鼠标右键松开
-                        MouseRButtonUp();
-                        break;
-                }
-
-
-                return CallNextHookEx(hHook, nCode, wParam, lParam);
-            }
-        }
-
-
-        #region 不同鼠标事件处理函数
-        private void MouseLButtonDown() {
-            ConstructMsg("左键按下\r\n");
-        }
-
-        private void MouseLButtonUp() {
-            ConstructMsg("左键释放\r\n");
-        }
-
-        /// <summary>
-        /// 滚轮
-        /// </summary>
-        /// <param name="wheelData">正值表示滚轮向前旋转，远离用户；负值表示轮子向后旋转，朝向用户。
-        /// 滚轮点击定义为WHEEL_DELTA，即 120。</param>
-        private void MouseWheel(int wheelData) {
-            wheelData = wheelData >> 16;
-            // 滚动数值
-            ConstructMsg($"滚轮滑动{wheelData}\r\n");
-        }
-
-        private void MouseHWheel() {
-            // 暂不支持
-        }
-
-        /// <summary>
-        /// 鼠标在x,y坐标，可能为负值，类似于在屏幕边界处冲出去还没有被拉回来的瞬间
-        /// </summary>
-        /// <param name="x">x坐标</param>
-        /// <param name="y">y坐标</param>
-        private void MouseMove(int x, int y) {
-            // 鼠标在x,y坐标，可能为负值，类似于在屏幕边界处冲出去还没有被拉回来的瞬间
-            ConstructMsg($"鼠标移动{x},{y}\r\n");
-        }
-
-        private void MouseRButtonDown() {
-            ConstructMsg("右键按下\r\n");
-        }
-
-        private void MouseRButtonUp() {
-            ConstructMsg("右键松开\r\n");
-        }
-
-        private void ConstructMsg(string str) {
-            MouseMsgEvent(str);
-        }
-
-        private event MouseMsgHandler MouseMsgEvent;
-        #endregion
-
-        #region 定义对外接口
-
-        /// <summary>
-        /// 设置钩子开是监听鼠标事件
-        /// </summary>
-        /// <param name="handler">若订阅的函数为Test()，则传入new MouseHook.MouseMsgHandler(test)。</param>
-        /// <returns>返回是否设置成功</returns>
-        public bool SetHook(MouseMsgHandler handler) {
-            if(_hook == 0) {
-                _hook = SetWindowsHookEx(WH_MOUSE_LL, new LowLevelMouseHookProcHandler(this.MouseHookProc),
-                    Marshal.GetHINSTANCE(Assembly.GetExecutingAssembly().GetModules()[0]), 0);
-                if(_hook != 0) {
-                    this.MouseMsgEvent += handler;
-                    return true;
-                } else return false;
-            } else {
-                DestroyHook();
-                return SetHook(handler);
-            }
-        }
-
-        /// <summary>
-        /// 判断是否有鼠标钩子在监听
-        /// </summary>
-        /// <returns>返回是否有鼠标钩子在监听</returns>
-        public bool HasHook() {
-            if(_hook == 0) return false;
-            else return true;
-        }
-
-        /// <summary>
-        /// 删除钩子，删除前自行判断是否存在钩子，否则报错
-        /// </summary>
-        public bool DestroyHook() {
-            bool suc = UnhookWindowsHookEx(_hook);
-            if(suc) {
-                _hook = 0;
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-
-        public delegate void MouseMsgHandler(string str);
-
-        #endregion
-    }
-
-
     class KeybdHook
     {
 
@@ -664,7 +389,7 @@ namespace LittleSheep.ControlModule
         /// 与挂钩过程关联的线程的标识符。对于桌面应用程序，如果此参数为零，则挂钩过程与在与调用线程相同的桌面中运行的所有现有线程相关联。</param>
         /// <returns>返回hook函数的句柄，否则返回空</returns>
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int SetWindowsHookEx(int idHook, LowLevelKeyboardProcHandler lpfn, IntPtr hmod, int dwThreadId);
+        private static extern int SetWindowsHookEx(int idHook, LowLevelKeyboardProcHandler lpfn, IntPtr hmod, int dwThreadId);
 
 
         /// <summary>
@@ -673,7 +398,7 @@ namespace LittleSheep.ControlModule
         /// <param name="idHook">钩子对应的序号</param>
         /// <returns>返回是否成功销毁</returns>
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool UnhookWindowsHookEx(int idHook);
+        private static extern bool UnhookWindowsHookEx(int idHook);
 
 
         /// <summary>
@@ -685,7 +410,7 @@ namespace LittleSheep.ControlModule
         /// <param name="lParam"></param>
         /// <returns></returns>
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int CallNextHookEx(int idHook, int nCode, UIntPtr wParam, IntPtr lParam);
+        private static extern int CallNextHookEx(int idHook, int nCode, UIntPtr wParam, IntPtr lParam);
 
 
         [StructLayout(LayoutKind.Sequential)]
@@ -1010,7 +735,7 @@ namespace LittleSheep.ControlModule
         /// 如果nCode大于等于0，并且hook过程没有处理该消息，强烈建议调用CallNextHookEx并返回它返回的值；
         /// 否则，其他安装了WH_MOUSE_LL挂钩的应用程序将不会收到挂钩通知，因此可能会出现错误行为。
         /// 如果钩子过程处理了消息，它可能会返回一个非零值，以防止系统将消息传递给钩子链的其余部分或目标窗口过程。</returns>
-        public int KaybdHookProc(int nCode, UIntPtr wParam, IntPtr lParam) {
+        private int KaybdHookProc(int nCode, UIntPtr wParam, IntPtr lParam) {
             KBDLLHOOKSTRUCT MyKeybdHookStruct = (KBDLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(KBDLLHOOKSTRUCT));
             if(nCode < 0) {
                 return CallNextHookEx(_hook, nCode, wParam, lParam);
@@ -1019,25 +744,28 @@ namespace LittleSheep.ControlModule
                 switch(keybdEventIdenti) {
                     case KEYBDEVENT.WM_KEYDOWN:
                         // 键盘键按下
-                        KeyndMsgEvent($"{MyKeybdHookStruct.vkCode}被按下");
+                        KeybdMsgEvent($"{MyKeybdHookStruct.vkCode}被按下");
                         break;
                     case KEYBDEVENT.WM_SYSKEYDOWN:
                         // 键盘系统键按下
-                        KeyndMsgEvent($"{MyKeybdHookStruct.vkCode}被按下");
+                        KeybdMsgEvent($"{MyKeybdHookStruct.vkCode}被按下");
                         break;
                     case KEYBDEVENT.WM_KEYUP:
                         // 键盘键松开
-                        KeyndMsgEvent($"{MyKeybdHookStruct.vkCode}被松开");
+                        KeybdMsgEvent($"{MyKeybdHookStruct.vkCode}被松开");
                         break;
                     case KEYBDEVENT.WM_SYSKEYUP:
                         // 键盘系统键松开
-                        KeyndMsgEvent($"{MyKeybdHookStruct.vkCode}被松开");
+                        KeybdMsgEvent($"{MyKeybdHookStruct.vkCode}被松开");
                         break;
                 }
 
                 return CallNextHookEx(_hook, nCode, wParam, lParam);
             }
         }
+
+
+        private event KeybdMsgHandler KeybdMsgEvent;
         #endregion
 
         #region 对外接口
@@ -1052,7 +780,7 @@ namespace LittleSheep.ControlModule
                 _hook = SetWindowsHookEx(WH_KEYBOARD_LL, new LowLevelKeyboardProcHandler(this.KaybdHookProc),
                     Marshal.GetHINSTANCE(Assembly.GetExecutingAssembly().GetModules()[0]), 0);
                 if(_hook != 0) {
-                    this.KeyndMsgEvent += handler;
+                    this.KeybdMsgEvent += handler;
                     return true;
                 } else return false;
             } else {
@@ -1077,6 +805,7 @@ namespace LittleSheep.ControlModule
             bool suc = UnhookWindowsHookEx(_hook);
             if(suc) {
                 _hook = 0;
+                KeybdMsgEvent = null;
                 return true;
             } else {
                 return false;
@@ -1084,7 +813,293 @@ namespace LittleSheep.ControlModule
         }
 
         public delegate void KeybdMsgHandler(string msg);
-        public event KeybdMsgHandler KeyndMsgEvent;
+        #endregion
+    }
+
+    /// <summary>
+    /// 用来监听鼠标事件
+    /// </summary>
+    class MouseHook
+    {
+
+        #region 单例类
+        class danli
+        {
+            static internal readonly MouseHook instance = new MouseHook();
+        }
+        private MouseHook() {
+        }
+        public static MouseHook Instance { get { return danli.instance; } }
+        #endregion
+
+        #region 定义钩子
+
+
+        private int _hook = 0;
+        public int HookId { get { return _hook; } }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="nCode">挂钩过程用于确定如何处理消息的代码。如果小于零，则挂钩过程必须将消息传递给 CallNextHookEx 函数而不进行进一步处理，
+        /// 并且应该返回 CallNextHookEx 返回的值。若为0，则wParam和lParameter包含鼠标的信息。</param>
+        /// <param name="wParam">鼠标的识别信息，包含WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE, 
+        /// WM_MOUSEWHEEL, WM_MOUSEHWHEEL, WM_RBUTTONDOWN, or WM_RBUTTONUP.</param>
+        /// <param name="lParam">指向一个MSLLHOOKSTRUCT结构的指针.</param>
+        /// <returns>如果nCode小于零，则挂钩程序必须返回 CallNextHookEx返回的值。
+        /// 如果nCode大于等于0，并且hook过程没有处理该消息，强烈建议调用CallNextHookEx并返回它返回的值；
+        /// 否则，其他安装了WH_MOUSE_LL挂钩的应用程序将不会收到挂钩通知，因此可能会出现错误行为。
+        /// 如果钩子过程处理了消息，它可能会返回一个非零值，以防止系统将消息传递给钩子链的其余部分或目标窗口过程。</returns>
+        public delegate int LowLevelMouseHookProcHandler(int nCode, UIntPtr wParam, IntPtr lParam);
+        //定义钩子句柄
+        //定义钩子类型
+        private const int WH_MOUSE_LL = 14;// 低级鼠标钩子
+
+
+        /// <summary>
+        /// 安装钩子开始监听
+        /// </summary>
+        /// <param name="idHook">低级鼠标钩子14</param>
+        /// <param name="lpfn">自己定义的钩子的消息处理方法(对应我们前面定义的委托)指向挂钩过程的指针。 
+        /// 如果dwThreadId参数为零或指定由不同进程创建的线程的标识符，则lpfn参数必须指向DLL中的挂钩过程。 
+        /// 否则，lpfn可以指向与当前进程关联的代码中的挂钩过程。</param>
+        /// <param name="hmod">模块的句柄，在本机代码中，对应dll的句柄(可在dll的入口函数中获取)；而我们是托管代码
+        /// 包含lpfn参数指向的钩子函数的DLL句柄。如果dwThreadId参数指定由当前进程创建的线程并且挂钩过程在与当前进程关联的代码内,
+        /// 则hMod参数必须设置为 NULL。</param>
+        /// <param name="dwThreadId">线程Id，传入0则为全局所有线程，否则传入特定的线程Id
+        /// 与挂钩过程关联的线程的标识符。对于桌面应用程序，如果此参数为零，则挂钩过程与在与调用线程相同的桌面中运行的所有现有线程相关联。</param>
+        /// <returns>返回hook函数的句柄，否则返回空</returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        private static extern int SetWindowsHookEx(int idHook, LowLevelMouseHookProcHandler lpfn, IntPtr hmod, int dwThreadId);
+
+
+        /// <summary>
+        /// 卸载钩子
+        /// </summary>
+        /// <param name="idHook">钩子对应的序号</param>
+        /// <returns>返回是否成功销毁</returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        private static extern bool UnhookWindowsHookEx(int idHook);
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="idHook">忽略</param>
+        /// <param name="nCode">传递给当前钩子过程的钩子代码。下一个钩子函数使用此代码来确定如何处理钩子信息。</param>
+        /// <param name="wParam"></param>
+        /// <param name="lParam"></param>
+        /// <returns></returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        private static extern int CallNextHookEx(int idHook, int nCode, UIntPtr wParam, IntPtr lParam);
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public class POINT
+        {
+            public int x;
+            public int y;
+        }
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MSLLHOOKSTRUCT
+        {
+            /// <summary>
+            /// 光标的x，y坐标
+            /// </summary>
+            public POINT pt;
+            /// <summary>
+            /// 如果消息是WM_MOUSEWHEEL，则高位两字节是滚动变化量。低位两字节无用。
+            /// 正值表示滚轮向前旋转，远离用户；负值表示轮子向后旋转，朝向用户。滚轮点击定义为WHEEL_DELTA，即 120。
+            /// 如果消息是WM_XBUTTONDOWN、WM_XBUTTONUP、WM_XBUTTONDBLCLK、WM_NCXBUTTONDOWN、WM_NCXBUTTONUP或WM_NCXBUTTONDBLCLK，
+            /// 则高位字指定按下或释放哪个 X 按钮，而低位字被保留。该值可以是1：第一个xbuttom，2：第二个xbuttom。否则， 不使用mouseData 。
+            /// </summary>
+            public int mouseData;
+            public int flags;
+            /// <summary>
+            /// 事件的时间戳
+            /// </summary>
+            public int time;
+            /// <summary>
+            /// 事件的额外信息
+            /// </summary>
+            public int dwExtraInfo;
+        }
+
+        #endregion
+
+        enum MOUSEGETEVENT
+        {
+            /// <summary>
+            /// 按下鼠标左键
+            /// </summary>
+            WM_LBUTTONDOWN = 0x0201,
+            /// <summary>
+            /// 松开鼠标左键
+            /// </summary>
+            WM_LBUTTONUP = 0x0202,
+            /// <summary>
+            /// 鼠标移动
+            /// </summary>
+            WM_MOUSEMOVE = 0x0200,
+            /// <summary>
+            /// 鼠标滚轮滚动
+            /// </summary>
+            WM_MOUSEWHEEL = 0x020A,
+            /// <summary>
+            /// 水平滚轮
+            /// </summary>
+            WM_MOUSEHWHEEL = 0x020E,
+            /// <summary>
+            /// 按下鼠标右键
+            /// </summary>
+            WM_RBUTTONDOWN = 0x0204,
+            /// <summary>
+            /// 松开鼠标右键
+            /// </summary>
+            WM_RBUTTONUP = 0x0205
+        }
+
+        private int MouseHookProc(int nCode, UIntPtr wParam, IntPtr lParam) {
+            MSLLHOOKSTRUCT MyMouseHookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
+            MOUSEGETEVENT mouseEventIdenti = (MOUSEGETEVENT)wParam;
+            if(nCode < 0) {
+                return CallNextHookEx(_hook, nCode, wParam, lParam);
+            } else {
+                switch(mouseEventIdenti) {
+                    case MOUSEGETEVENT.WM_LBUTTONDOWN:
+                        // 鼠标左键按下
+                        MouseLButtonDown();
+                        break;
+                    case MOUSEGETEVENT.WM_LBUTTONUP:
+                        // 鼠标左键松开
+                        MouseLButtonUp();
+                        break;
+                    case MOUSEGETEVENT.WM_MOUSEWHEEL:
+                        // 滚轮移动
+                        MouseWheel(MyMouseHookStruct.mouseData);
+                        break;
+                    case MOUSEGETEVENT.WM_MOUSEHWHEEL:
+                        // 滚轮水平移动
+                        MouseHWheel();
+                        break;
+                    case MOUSEGETEVENT.WM_MOUSEMOVE:
+                        // 鼠标移动
+                        MouseMove(MyMouseHookStruct.pt.x, MyMouseHookStruct.pt.y);
+                        break;
+                    case MOUSEGETEVENT.WM_RBUTTONDOWN:
+                        // 鼠标右键按下
+                        MouseRButtonDown();
+                        break;
+                    case MOUSEGETEVENT.WM_RBUTTONUP:
+                        //鼠标右键松开
+                        MouseRButtonUp();
+                        break;
+                }
+
+
+                return CallNextHookEx(_hook, nCode, wParam, lParam);
+            }
+        }
+
+
+        #region 不同鼠标事件处理函数
+        private void MouseLButtonDown() {
+            ConstructMsg("左键按下\r\n");
+        }
+
+        private void MouseLButtonUp() {
+            ConstructMsg("左键释放\r\n");
+        }
+
+        /// <summary>
+        /// 滚轮
+        /// </summary>
+        /// <param name="wheelData">正值表示滚轮向前旋转，远离用户；负值表示轮子向后旋转，朝向用户。
+        /// 滚轮点击定义为WHEEL_DELTA，即 120。</param>
+        private void MouseWheel(int wheelData) {
+            wheelData = wheelData >> 16;
+            // 滚动数值
+            ConstructMsg($"滚轮滑动{wheelData}\r\n");
+        }
+
+        private void MouseHWheel() {
+            // 暂不支持
+        }
+
+        /// <summary>
+        /// 鼠标在x,y坐标，可能为负值，类似于在屏幕边界处冲出去还没有被拉回来的瞬间
+        /// </summary>
+        /// <param name="x">x坐标</param>
+        /// <param name="y">y坐标</param>
+        private void MouseMove(int x, int y) {
+            // 鼠标在x,y坐标，可能为负值，类似于在屏幕边界处冲出去还没有被拉回来的瞬间
+            ConstructMsg($"鼠标移动{x},{y}\r\n");
+        }
+
+        private void MouseRButtonDown() {
+            ConstructMsg("右键按下\r\n");
+        }
+
+        private void MouseRButtonUp() {
+            ConstructMsg("右键松开\r\n");
+        }
+
+        private void ConstructMsg(string str) {
+            MouseMsgEvent(str);
+        }
+
+        private event MouseMsgHandler MouseMsgEvent;
+        #endregion
+
+        #region 定义对外接口
+
+        /// <summary>
+        /// 设置钩子开是监听鼠标事件
+        /// </summary>
+        /// <param name="handler">若订阅的函数为Test()，则传入new MouseHook.MouseMsgHandler(test)。</param>
+        /// <returns>返回是否设置成功</returns>
+        public bool SetHook(MouseMsgHandler handler) {
+            if(_hook == 0) {
+                _hook = SetWindowsHookEx(WH_MOUSE_LL, new LowLevelMouseHookProcHandler(this.MouseHookProc),
+                    Marshal.GetHINSTANCE(Assembly.GetExecutingAssembly().GetModules()[0]), 0);
+                if(_hook != 0) {
+                    this.MouseMsgEvent += handler;
+                    return true;
+                } else return false;
+            } else {
+                DestroyHook();
+                return SetHook(handler);
+            }
+        }
+
+        /// <summary>
+        /// 判断是否有鼠标钩子在监听
+        /// </summary>
+        /// <returns>返回是否有鼠标钩子在监听</returns>
+        public bool HasHook() {
+            if(_hook == 0) return false;
+            else return true;
+        }
+
+        /// <summary>
+        /// 删除钩子，删除前自行判断是否存在钩子，否则报错
+        /// </summary>
+        public bool DestroyHook() {
+            bool suc = UnhookWindowsHookEx(_hook);
+            if(suc) {
+                _hook = 0;
+                MouseMsgEvent = null;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+
+        public delegate void MouseMsgHandler(string str);
+
         #endregion
     }
 
