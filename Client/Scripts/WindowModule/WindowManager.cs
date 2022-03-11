@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -73,6 +74,73 @@ namespace LittleSheep
                 m_stream.Read(decodebytes,0,decodebytes.Length);
                 return new Bitmap(m_stream);
             }
+        }
+
+        //-------------------------传输--------------------------------------
+        /// <summary>
+        /// 获取oldone和newone进行异或得到的位图所对应的字节流
+        /// </summary>
+        /// <param name="oldone">前一张位图</param>
+        /// <param name="newone">后一张位图</param>
+        /// <returns></returns>
+        public byte[] GetBitmapXOR(Bitmap oldone,Bitmap newone)
+        {
+            var size = WindowManager.Instance.GetPhysicalScreenSize();
+            int width = size.Item1, height = size.Item2;
+
+            BitmapData olddata = oldone.LockBits(new System.Drawing.Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+            BitmapData newdata = newone.LockBits(new System.Drawing.Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+
+            width *= 3;
+
+            int stride = olddata.Stride;
+            int offset = stride - width;
+            IntPtr iptr1 = olddata.Scan0;
+            IntPtr iptr2 = newdata.Scan0;
+            int scanBytes = stride * height;
+            int posScan = 0, posReal = 0;
+
+            byte[] xorResult = new byte[scanBytes];
+
+            byte[] oldbytes = new byte[scanBytes];
+            byte[] newbytes = new byte[scanBytes];
+
+            Marshal.Copy(iptr1, oldbytes, 0, scanBytes);
+            Marshal.Copy(iptr2, newbytes, 0, scanBytes);
+
+            for (int x = 0; x < height; ++x)
+            {
+                for (int y = 0; y < width; ++y)
+                {
+                    xorResult[posScan] = (byte)(oldbytes[posReal] ^ newbytes[posReal]);
+                    posScan++;
+                    posReal++;
+                }
+                posScan += offset;
+            }
+
+            return xorResult;
+        }
+
+        /// <summary>
+        /// 获取oldone和newone进行异或得到的位图所对应的被压缩过的字节流
+        /// </summary>
+        /// <param name="oldone">前一张位图</param>
+        /// <param name="newone">后一张位图</param>
+        /// <returns></returns>
+        public byte[] GetCompressedBitmapXOR(Bitmap oldone,Bitmap newone)
+        {
+            return CompressKit.GZipSevenZipCompress(GetBitmapXOR(oldone, newone));
+        }
+
+        /// <summary>
+        /// 获取oldone和newone进行异或得到的位图所对应的被压缩过的字节流的解压
+        /// </summary>
+        /// <param name="source">被压缩的字节流</param>
+        /// <returns></returns>
+        public byte[] GetDecompressedBitmapXOR(byte[] source)
+        {
+            return CompressKit.GZipSevenZipDecompress(source);
         }
     }
 }
