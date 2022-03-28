@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -19,11 +20,16 @@ namespace LittleSheep
         public static WindowManager Instance { get { return Nested.instance; } }
         #endregion
 
+        const int windowWidth = 1920;
+        const int windowHeight = 1080;
+
+
         /// <summary>
-        /// 获得当前屏幕的Bitmap
+        /// 获得当前屏幕的Bitmap，转换为1920*1080
         /// </summary>
         /// <returns>返回BItMap</returns>
-        private Bitmap GetScreenBitmap() {
+        public Bitmap GetScreenBitmap() 
+        {
             Tuple<int, int> size = GetPhysicalScreenSize();
 
             Rectangle bounds = new Rectangle(0, 0, size.Item1, size.Item2);
@@ -33,15 +39,123 @@ namespace LittleSheep
                 g.CopyFromScreen(new Point(bounds.Left, bounds.Top), Point.Empty, bounds.Size, CopyPixelOperation.SourceCopy);
             }
 
+            if(size.Item1!=1920 || size.Item2!=1080)
+            {
+                bitmap = ResizeBitmap(bitmap, windowWidth, windowHeight);
+            }
+
             // bitmap.Save($".//test.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
             return bitmap;
+        }
+
+        /// <summary>
+        /// 返回行主序的将转化成了1920*1080的屏幕截图分成16块等大的480*270的位图的列表
+        /// </summary>
+        /// <returns></returns>
+        public List<Bitmap> GetScreenBitmapChunk()
+        {
+            const int stepX = windowWidth / 4;
+            const int stepY = windowHeight / 4;
+
+            List<Bitmap> result = new List<Bitmap>();
+            Bitmap source = GetScreenBitmap();
+
+            int startY = 0;
+            for (int y = 1; y <= 4; ++y, startY += stepY) 
+            {
+                int startX = 0;
+                for (int x = 1; x <= 4; ++x, startX += stepX) 
+                {
+                    result.Add(CutBitmap(source, startX, startY, stepX, stepY));
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 缩放位图
+        /// </summary>
+        /// <param name="bmp">源</param>
+        /// <param name="newW">新的宽度</param>
+        /// <param name="newH">新的高度</param>
+        /// <returns></returns>
+        private static Bitmap ResizeBitmap(Bitmap bmp, int newW, int newH)
+        {
+            try
+            {
+                Bitmap b = new Bitmap(newW, newH);
+                Graphics g = Graphics.FromImage(b);
+
+                // 插值算法的质量
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
+                g.DrawImage(bmp, new Rectangle(0, 0, newW, newH), new Rectangle(0, 0, bmp.Width, bmp.Height), GraphicsUnit.Pixel);
+                g.Dispose();
+
+                return b;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 裁剪位图
+        /// </summary>
+        /// <param name="source">源</param>
+        /// <param name="startX">原起始位置X</param>
+        /// <param name="startY">原起始位置Y</param>
+        /// <param name="iWidth">宽度</param>
+        /// <param name="iHeight">高度</param>
+        /// <returns></returns>
+        private static Bitmap CutBitmap(Bitmap source, int startX, int startY, int iWidth, int iHeight)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            int w = source.Width;
+            int h = source.Height;
+
+            if (startX >= w || startY >= h)
+            {
+                return null;
+            }
+
+            if (startX + iWidth > w)
+            {
+                   iWidth = w - startX;
+            }
+
+            if (startY + iHeight > h)
+            {
+                   iHeight = h - startY;
+            }
+
+            try
+            {
+                Bitmap bmpOut = new Bitmap(iWidth, iHeight, PixelFormat.Format24bppRgb);
+
+                Graphics g = Graphics.FromImage(bmpOut);
+                g.DrawImage(source, new Rectangle(0, 0, iWidth, iHeight), new Rectangle(startX, startY, iWidth, iHeight), GraphicsUnit.Pixel);
+                g.Dispose();
+
+                return bmpOut;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         /// <summary>
         /// 得到当前屏幕jpeg图像zip压缩的字节流
         /// </summary>
         /// <returns>当前屏幕jpeg图像zip压缩的字节流</returns>
-        public byte[] WindowGetter() {
+        [Obsolete]
+        private byte[] WindowGetter() {
             Bitmap cur = GetScreenBitmap();
             using(MemoryStream stream = new MemoryStream()) {
                 cur.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg);
@@ -68,7 +182,8 @@ namespace LittleSheep
         /// </summary>
         /// <param name="stream">压缩的字节流</param>
         /// <returns>解压字节流后并解码的Bitmap</returns>
-        public Bitmap WindowSetter(byte[] stream) {
+        [Obsolete]
+        private Bitmap WindowSetter(byte[] stream) {
             byte[] decodebytes = CompressKit.DecompressBytes(stream);
             using(MemoryStream m_stream = new MemoryStream()) {
                 m_stream.Read(decodebytes,0,decodebytes.Length);

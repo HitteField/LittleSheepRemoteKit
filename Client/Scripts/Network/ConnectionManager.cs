@@ -83,6 +83,9 @@ namespace LittleSheep
             isSender = false;
             isAbortFileTransfer = false;
             isTransfering = false;
+
+            if (sendThread!=null && sendThread.IsAlive) sendThread.Abort();
+            if (recvThread!=null && recvThread.IsAlive) recvThread.Abort();
         }
 
         //--------------------------------局域网报文---------------------------------
@@ -135,6 +138,8 @@ namespace LittleSheep
         }
 
         #endregion
+
+        //-----------------------------------文件传输----------------------------------------------
 
         #region 文件传输模块
 

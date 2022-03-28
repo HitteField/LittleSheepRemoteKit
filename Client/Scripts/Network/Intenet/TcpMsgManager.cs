@@ -21,11 +21,28 @@ namespace LittleSheep
         //写入队列
         Queue<ByteArray> writeQueue;
         //网络事件管理器
-        NetMsgHandler msgHandler = new NetMsgHandler();
+        //NetMsgHandler msgHandler = new NetMsgHandler();
         //本机是否是接收端
         bool isServer = false;
         //此连接使用的端口
         int port = -1;
+
+        //-------------------------------事件---------------------------------
+
+        /// <summary>
+        /// 事件-连接成功
+        /// </summary>
+        public Action<string> OnConnectSucc;
+        /// <summary>
+        /// 事件-连接失败
+        /// </summary>
+        public Action<string> OnConnectFail;
+        /// <summary>
+        /// 事件-连接关闭
+        /// </summary>
+        public Action<string> OnConnectClose;
+
+        //--------------------------------------------------------------------
         
         /// <summary>
         /// 构造函数
@@ -43,7 +60,7 @@ namespace LittleSheep
         public void Update()
         {
             if (clientfd == null || !clientfd.Connected) return;
-            MsgUpdate();            //消息处理
+            //MsgUpdate();            //消息处理
             PingUpdate();           //心跳
         }
 
@@ -71,15 +88,16 @@ namespace LittleSheep
                 lastPongTime = TimeKit.GetTimeStamp();       //初始化心跳PONG
 
                 //监听PONG协议（心跳机制）
-                if (!msgHandler.HasMsgListener("MsgPong"))
+                /*if (!msgHandler.HasMsgListener("MsgPong"))
                 {
                     msgHandler.AddMsgListener("MsgPong", OnMsgPong);
-                }
+                }*/
             }
 
             readBuff = new ByteArray();                                             //初始化读缓冲区
             writeQueue = new Queue<ByteArray>();                                    //初始化写入队列
-            msgList = new List<MsgBase>();                                          //初始化消息列表
+            //msgList = new List<MsgBase>();                                          //初始化消息列表
+            msgQueue = new Queue<MsgBase>();
             msgCount = 0;                   //初始时消息列表当然为空
             isConnecting = false;           //初始化的时候还没开始连接
             isClosing = false;              //当然也没关闭
@@ -140,14 +158,16 @@ namespace LittleSheep
                 clientfd.NoDelay = true;
 
                 DebugKit.Log($"TcpMsgManager has accepted remoteUser{(string)remoteIp}'s connection");
-                msgHandler.FireEvent(NetEvent.ConnectSucc, string.Empty);     
+                //msgHandler.FireEvent(NetEvent.ConnectSucc, string.Empty);
+                OnConnectSucc?.Invoke(string.Empty);
                 isConnecting = false;
                 clientfd.BeginReceive(readBuff.bytes, readBuff.writeIdx, readBuff.Remain, 0, ReceiveCallback, clientfd);
             }
             catch (Exception ex)
             {
                 DebugKit.Error($"[TcpMsgManager.AcceptThread]{ex.Message}");
-                msgHandler.FireEvent(NetEvent.ConnectFail, ex.ToString());     
+                //msgHandler.FireEvent(NetEvent.ConnectFail, ex.ToString());     
+                OnConnectFail?.Invoke(ex.ToString());
                 isConnecting = false;
             }
         }
@@ -197,7 +217,8 @@ namespace LittleSheep
                 Socket socket = (Socket)ar.AsyncState;
                 socket.EndConnect(ar);
                 DebugKit.Log("Socket Connect Succ.");
-                msgHandler.FireEvent(NetEvent.ConnectSucc, string.Empty);      //分发“连接成功”事件
+                //msgHandler.FireEvent(NetEvent.ConnectSucc, string.Empty);      //分发“连接成功”事件
+                OnConnectSucc?.Invoke(string.Empty);
                 isConnecting = false;                               //连接结束
                                                                     //连接完成，开始接收消息
                 socket.BeginReceive(readBuff.bytes, readBuff.writeIdx, readBuff.Remain, 0, ReceiveCallback, socket);
@@ -205,7 +226,8 @@ namespace LittleSheep
             catch (Exception ex)
             {
                 DebugKit.Log("Socket Connect Fail with reason: " + ex.ToString());
-                msgHandler.FireEvent(NetEvent.ConnectFail, ex.ToString());     //分发“连接失败”事件
+                //msgHandler.FireEvent(NetEvent.ConnectFail, ex.ToString());     //分发“连接失败”事件
+                OnConnectFail?.Invoke(ex.ToString());
                 isConnecting = false;                               //连接结束
             }
         }
@@ -223,7 +245,8 @@ namespace LittleSheep
             else
             {
                 clientfd.Close();
-                msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                //msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                OnConnectClose?.Invoke(string.Empty);
             }
 
         }
@@ -304,7 +327,8 @@ namespace LittleSheep
             else if (isClosing)                  //全都发完了后康康是否正在关闭
             {
                 socket.Close();
-                msgHandler.FireEvent(NetEvent.Close, string.Empty);        //分发事件
+                //msgHandler.FireEvent(NetEvent.Close, string.Empty);        //分发事件
+                OnConnectClose?.Invoke(string.Empty);
                 isClosing = false;
             }
 
@@ -316,7 +340,8 @@ namespace LittleSheep
         /// <summary>
         /// 消息列表
         /// </summary>
-        List<MsgBase> msgList = new List<MsgBase>();
+        //List<MsgBase> msgList = new List<MsgBase>();
+        Queue<MsgBase> msgQueue = new Queue<MsgBase>();
         /// <summary>
         /// 消息列表长度
         /// </summary>
@@ -351,7 +376,8 @@ namespace LittleSheep
             }
             catch (Exception ex)
             {
-                msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                //msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                OnConnectClose?.Invoke(string.Empty);
                 DebugKit.Warning("Socket Receive Fail with reason: " + ex.ToString());
             }
         }
@@ -359,7 +385,7 @@ namespace LittleSheep
         /// <summary>
         /// 读取并解析收到的消息，将消息放入消息列表中
         /// </summary>
-        public void OnReceiveData()
+        private void OnReceiveData()
         {
             if (readBuff.Length <= 2) return;
 
@@ -387,9 +413,9 @@ namespace LittleSheep
             readBuff.CheckAndMoveBytes();
 
             //添加到消息队列
-            lock (msgList)
+            lock (msgQueue)
             {
-                msgList.Add(msgBase);
+                msgQueue.Enqueue(msgBase);
             }
             msgCount++;
 
@@ -398,11 +424,23 @@ namespace LittleSheep
                 OnReceiveData();
         }
 
-        public void MsgUpdate()
+        public MsgBase GetMsg()
         {
-            if (msgCount == 0) return;
+            if (msgCount == 0) return null;
 
-            for (int i = 0; i < MAX_MESSAGE_FIRE; ++i)         //每次Update需要做最多MAX_MESSAGE_FIRE条消息的处理
+            MsgBase msgBase = null;
+            lock (msgQueue)
+            {
+                if (msgQueue.Count > 0)
+                {
+                    msgBase = msgQueue.Dequeue();
+                    msgCount--;
+                }
+            }
+
+            return msgBase;
+
+            /*for (int i = 0; i < MAX_MESSAGE_FIRE; ++i)         
             {
                 MsgBase msgBase = null;
                 lock (msgList)
@@ -420,7 +458,7 @@ namespace LittleSheep
                     msgHandler.FireMsg(msgBase.protoName, msgBase);
                 }
                 else break;             //没有新的消息了
-            }
+            }*/
         }
 
         //--------------------------------心跳机制--------------------------------------
