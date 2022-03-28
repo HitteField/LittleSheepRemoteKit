@@ -1,17 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup />
+  <PropertyGroup>
+    <_LastSelectedProfileId>D:\Code\Project\LittleSheepRemoteKit\Client\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
+  </PropertyGroup>
   <ItemGroup>
     <ApplicationDefinition Update="App.xaml">
       <SubType>Designer</SubType>
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="XamlWindows\DuringFileTransfer.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="XamlWindows\FunctionWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="XamlWindows\RecvLANConnectRequestMsgWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="XamlWindows\DuringFileTransfer.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="XamlWindows\FunctionWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="XamlWindows\MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>

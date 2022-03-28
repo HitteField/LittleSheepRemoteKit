@@ -5,39 +5,44 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800"
+        Title="MainWindow" Height="500" Width="800"
         Closed="Window_Closed">
     <Grid>
-        <TextBox Name="debugString" Text="" HorizontalAlignment="Left" Height="158" Margin="10,401,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="772" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Visible"/>
-        <Button Name="initLanButton" Content="初始化LAN" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="555,45,0,0" Click="InitLan_Click"/>
-        <Button Name="startRecvBoardcastButton" Content="开启接收广播" HorizontalAlignment="Left" Margin="555,82,0,0" VerticalAlignment="Top" Width="75" Click="StartRecvBoardcast_Click"/>
-        <Button Name="sendBoardcastButton" Content="发送广播探查" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="555,118,0,0" Click="sendBoardcast_Click"/>
-        <TextBox Name="userNameString" HorizontalAlignment="Left" Height="19" Margin="555,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="83" TextChanged="userNameString_TextChanged">
-            <TextBox.Resources>
-                <VisualBrush x:Key="HintText" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
-                    <VisualBrush.Visual>
-                        <TextBlock FontStyle="Italic" Text="请输入用户名"/>
-                    </VisualBrush.Visual>
-                </VisualBrush>
-            </TextBox.Resources>
-            <TextBox.Style>
-                <Style TargetType="TextBox">
-                    <Style.Triggers>
-                        <Trigger Property="Text" Value="{x:Null}">
-                            <Setter Property="Background" Value="{StaticResource HintText}"/>
-                        </Trigger>
-                        <Trigger Property="Text" Value="">
-                            <Setter Property="Background" Value="{StaticResource HintText}"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBox.Style>
-        </TextBox>
-        <DataGrid Name="RemoteUserList" ItemsSource="{Binding remoteUsers}" HorizontalAlignment="Left" Height="236" Margin="10,10,0,0" VerticalAlignment="Top" Width="500" IsReadOnly="True" AutoGenerateColumns="False" MouseDoubleClick="RemoteUserList_MouseDoubleClick">
-            <DataGrid.Columns >
-                <DataGridTextColumn Binding="{Binding UserName}" Header="UserName" Width="*" />
-                <DataGridTextColumn Binding="{Binding EndPoint}" Header="EndPoint" Width="*" />
-            </DataGrid.Columns>
-        </DataGrid>
+        <Viewbox Stretch="Fill">
+            <Canvas Name="MainCanvas" Width="800" Height="450">
+                <TextBox Name="debugString" Text="" HorizontalAlignment="Left" Height="189" TextWrapping="Wrap" VerticalAlignment="Top" Width="780" AcceptsReturn="True" IsReadOnly="True" VerticalScrollBarVisibility="Visible" Canvas.Left="10" Canvas.Top="251"/>
+                <Button Name="startRecvBoardcastButton" Content="开启接收广播" HorizontalAlignment="Left" VerticalAlignment="Top" Width="83" Click="StartRecvBoardcast_Click" Canvas.Left="555" Canvas.Top="47">
+                </Button>
+                <Button Name="sendBoardcastButton" Content="发送广播探查" HorizontalAlignment="Left" VerticalAlignment="Top" Width="83" Click="sendBoardcast_Click" Canvas.Left="555" Canvas.Top="84">
+                </Button>
+                <TextBox Name="userNameString" HorizontalAlignment="Left" Height="19" Margin="555,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="83" TextChanged="userNameString_TextChanged">
+                    <TextBox.Resources>
+                        <VisualBrush x:Key="HintText" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
+                            <VisualBrush.Visual>
+                                <TextBlock FontStyle="Italic" Text="请输入用户名"/>
+                            </VisualBrush.Visual>
+                        </VisualBrush>
+                    </TextBox.Resources>
+                    <TextBox.Style>
+                        <Style TargetType="TextBox">
+                            <Style.Triggers>
+                                <Trigger Property="Text" Value="{x:Null}">
+                                    <Setter Property="Background" Value="{StaticResource HintText}"/>
+                                </Trigger>
+                                <Trigger Property="Text" Value="">
+                                    <Setter Property="Background" Value="{StaticResource HintText}"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <DataGrid Name="RemoteUserList" ItemsSource="{Binding remoteUsers}" HorizontalAlignment="Left" Height="236" Margin="10,10,0,0" VerticalAlignment="Top" Width="500" IsReadOnly="True" AutoGenerateColumns="False" MouseDoubleClick="RemoteUserList_MouseDoubleClick">
+                    <DataGrid.Columns >
+                        <DataGridTextColumn Binding="{Binding UserName}" Header="用户名" Width="*" />
+                        <DataGridTextColumn Binding="{Binding EndPoint}" Header="远端终点" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Canvas>
+        </Viewbox>
     </Grid>
 </Window>

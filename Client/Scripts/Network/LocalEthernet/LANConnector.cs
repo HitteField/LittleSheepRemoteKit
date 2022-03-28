@@ -11,72 +11,7 @@ using System.Windows.Controls;
 
 namespace LittleSheep
 {
-    public struct RemoteUser
-    {
-        public string userName;
-        public IPEndPoint endPoint;
-
-        public String UserName { get; set; }
-        public String EndPoint
-        {
-            get
-            {
-                return endPoint.ToString();
-            }
-            set
-            {
-                string[] endPontStr = value.Split(':');
-                endPoint = new IPEndPoint(IPAddress.Parse(endPontStr[0]), Convert.ToInt32(endPontStr[1]));
-            }
-        }
-
-        public RemoteUser(string userName, IPEndPoint endPoint)
-        {
-            this.userName = userName;
-            this.endPoint = endPoint;
-            UserName = userName;
-        }
-
-        #region 重载的函数
-        public override string ToString()
-        {
-            return userName + " " + endPoint.ToString();
-        }
-
-        public bool Equals(RemoteUser other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            // 由于发送消息用的是随机端口，所以这里只判断IP是否相同
-            if (userName != other.userName || endPoint.Address.ToString() != other.endPoint.Address.ToString()) return false;
-            return true;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((RemoteUser)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return ((endPoint != null && userName != null) ? endPoint.Address.ToString().GetHashCode() + userName.GetHashCode() : 0);
-        }
-
-        public static bool operator ==(RemoteUser left, RemoteUser right)
-        {
-            return Equals(left, right);
-        }
-
-        public static bool operator !=(RemoteUser left, RemoteUser right)
-        {
-            return !Equals(left, right);
-        }
-        #endregion
-
-    }
+    
     class LANConnector : ILANConnector
     {
         #region 单例类构造函数
@@ -88,11 +23,11 @@ namespace LittleSheep
         public static LANConnector Instance { get { return Nested.instance; } }
         #endregion
 
-        private UdpClient boardcastfd;
-        private UdpClient boardcastRecvfd;
+        private UdpClient broadcastfd;
+        private UdpClient broadcastRecvfd;
 
-        public UdpClient BoardcastRecvfd => boardcastRecvfd;
-        public UdpClient Boardcastfd => boardcastfd;
+        public UdpClient BroadcastRecvfd => broadcastRecvfd;
+        public UdpClient Broadcastfd => broadcastfd;
         public bool OpenToLan { get; set; }
 
         public bool HasInit = false;
@@ -106,26 +41,31 @@ namespace LittleSheep
         /// 广播获取得到的局域网内的其他终端
         /// </summary>
         public List<RemoteUser> remoteUsers = new List<RemoteUser>();
+        /// <summary>
+        /// 本机在局域网内的全部IP
+        /// </summary>
+        public List<RemoteUser> locateUsers = new List<RemoteUser>();
 
-        public Thread boardcastRecvThread;
+        public Thread broadcastRecvThread;
         public Thread unicastRecvThread;
 
-        public bool Initialization()
+        public bool Init()
         {
             try
             {
-                boardcastfd = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
+                broadcastfd = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
 
                 msgHandler.AddMsgListener("LANProbeRequestMsg", OnRecvLANProbeRequestMsg);
                 msgHandler.AddMsgListener("LANProbeReplyMsg", OnRecvLANProbeReplyMsg);
-                msgHandler.AddMsgListener("LANConnectRequestMsg", OnRecvLANConnectRequestMsg);
+                //msgHandler.AddMsgListener("LANConnectRequestMsg", OnRecvLANConnectRequestMsg);
                 msgHandler.AddMsgListener("LANConnectReplyMsg", OnRecvLANConnectReplyMsg);
 
-                boardcastRecvThread = new Thread(BoardcastReceive);
+                broadcastRecvThread = new Thread(BroadcastReceive);
                 unicastRecvThread = new Thread(UnicastReceive);
-                boardcastRecvThread.IsBackground = true;
+                broadcastRecvThread.IsBackground = true;
                 unicastRecvThread.IsBackground = true;
-                boardcastRecvThread.Start();
+                unicastRecvThread.SetApartmentState(ApartmentState.STA);
+                broadcastRecvThread.Start();
                 unicastRecvThread.Start();
 
                 OpenToLan = false;
@@ -133,11 +73,13 @@ namespace LittleSheep
 
                 DebugKit.Log("LANConnector has inited");
 
+                LANProbeRequest();
+
                 return true;
             }
             catch (Exception ex)
             {
-                boardcastfd = null;
+                broadcastfd = null;
                 msgHandler.RemoveAllEventListener();
                 msgHandler.RemoveAllMsgListener();
                 DebugKit.Warning("[Initialization]" + ex.Message);
@@ -146,42 +88,88 @@ namespace LittleSheep
             }
         }
 
-        public bool BoardcastMsg(MsgBase msg)
+        public bool BroadcastMsg(MsgBase msg)
         {
-            if (boardcastfd == null) return false;
+            if (broadcastfd == null) return false;
             try
             {
                 byte[] msgBytes = MsgBase.EncodeToSendBytes(msg);
-                IPEndPoint endpoint = new IPEndPoint(IPAddress.Broadcast, 20714);
+                //获取全部本地局域网
+                List<Tuple<string, string, string>> EthernetList = NetKit.GetLocalNetworkInf();
+                foreach(var ipinf in EthernetList)
+                {
+                    IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(ipinf.Item3), 20714);
+                    broadcastfd.Send(msgBytes, msgBytes.Length, endpoint);
+                    //DebugKit.Log("BroadcastMsg has been sent to " + ipinf.Item3);
+                }
+
+                /*List<string> EthernetList = NetKit.GetLocalIpAddress(AddressFamily.InterNetwork);
+                foreach (var ip in EthernetList)
+                {
+                    //locateUsers.Add(new RemoteUser(UserInformationCache.Default.UserName, new IPEndPoint(IPAddress.Parse(ip), 0)));
+
+                    string[] parts = ip.Split('.');
+                    int netTypeNum = Convert.ToInt32(parts[0]);
+                    if (netTypeNum != 127) //本地回环
+                    {
+                        if (netTypeNum < 127) parts[1] = (255).ToString();  // A类IP
+                        if (netTypeNum < 192) parts[2] = (255).ToString();  // B类IP
+                        if (netTypeNum < 224) parts[3] = (255).ToString();  // C类IP
+                    }
+                    StringBuilder stringBuilder = new StringBuilder(parts[0]);
+                    for (int i = 1; i <= 3; ++i)
+                    {
+                        stringBuilder.Append(".");
+                        stringBuilder.Append(parts[i]);
+                    }
+                    IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(stringBuilder.ToString()), 20714);
+                    broadcastfd.Send(msgBytes, msgBytes.Length, endpoint);
+                    DebugKit.Log("BroadcastMsg has been sent to " + stringBuilder.ToString());
+                }*/
+
+                /*IPEndPoint endpoint = new IPEndPoint(IPAddress.Broadcast, 20714);
                 boardcastfd.Send(msgBytes, msgBytes.Length, endpoint);
-                DebugKit.Log("BoardcastMsg has been sent");
+                DebugKit.Log("BoardcastMsg has been sent to " + endpoint.ToString());*/
+
                 return true;
             }
             catch(Exception ex)
             {
-                DebugKit.Warning("[BoardcastMsg]" + ex.Message);
+                DebugKit.Warning("[BroadcastMsg]" + ex.Message);
                 return false;
             }
         }
 
-        public void BoardcastReceive()
+        /// <summary>
+        /// 单播一条消息
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="remoteUser"></param>
+        /// <returns></returns>
+        public bool UnicastMsg(MsgBase msg, RemoteUser remoteUser)
         {
-            boardcastRecvfd = new UdpClient(new IPEndPoint(IPAddress.Any, 20714));
-            DebugKit.Log("boardcastRecvfd has bound to 20714");
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 0);
+            UdpClient sender = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
+            IPEndPoint endPoint = new IPEndPoint(remoteUser.endPoint.Address, 20713);
+            byte[] bytes = MsgBase.EncodeToSendBytes(msg);
+            int result = sender.Send(bytes, bytes.Length, endPoint);
+            return result > 0;
+        }
+
+        public void BroadcastReceive()
+        {
+            broadcastRecvfd = new UdpClient(new IPEndPoint(IPAddress.Any, 20714));
+            DebugKit.Log("broadcastRecvfd has bound to 20714");
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 20714);
             while(true)
             {
-                byte[] buf = boardcastRecvfd.Receive(ref endPoint);
+                byte[] buf = broadcastRecvfd.Receive(ref endPoint);
 
-                DebugKit.Log("Has recved a boardcastMsg");
+                //DebugKit.Log("Has recved a boardcastMsg");
 
                 MsgBase msg = MsgBase.DecodeFromRecvBytes(buf);
 
                 object[] args = new object[1];
-                if(msg.protoName == "LANProbeRequestMsg")
-                {
-                    args[0] = endPoint;
-                }
+                args[0] = endPoint;
 
                 msgHandler.FireMsg(msg.protoName, msg, args);
 
@@ -192,12 +180,19 @@ namespace LittleSheep
         {
             UdpClient unicastRecvfd = new UdpClient(new IPEndPoint(IPAddress.Any, 20713));
             DebugKit.Log("unicastRecvfd has bound to 20713");
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 0);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 20713);
             while(true)
             {
                 byte[] buf = unicastRecvfd.Receive(ref endPoint);
 
-                DebugKit.Log("Has recved a unicastMsg");
+                //DebugKit.Log("Has recved a unicastMsg");
+
+                //如果已经连接上了远程设备却又收到了来自第三者的单播报文
+                if (ConnectionManager.Instance.HasConnected && ConnectionManager.Instance.remoteUser.endPoint.Address.ToString() != endPoint.Address.ToString())
+                {
+                    DebugKit.Log("收到了一条第三者的单播消息:" + endPoint.Address);
+                    continue;
+                }
 
                 MsgBase msg = MsgBase.DecodeFromRecvBytes(buf);
 
@@ -210,10 +205,20 @@ namespace LittleSheep
         }
 
         #region 具体连接步骤
+
+        Timer connectRequestTimer = null;
+        bool hasRecvConnectReply = false;
+        const int connectTimeOutLimit = 7500;           
+
         public bool LANProbeRequest()
         {
+            //remoteUsers.Clear();
+            //msgHandler.FireEvent(NetEvent.LANRemoteUserListReady);
+
+            //Thread.Sleep(10);
+
             LANProbeRequestMsg probeRequestMsg = new LANProbeRequestMsg();
-            return BoardcastMsg(probeRequestMsg);
+            return BroadcastMsg(probeRequestMsg);
         }
 
         public bool LANConnectRequest(RemoteUser remoteUser)
@@ -222,10 +227,9 @@ namespace LittleSheep
             connectRequestMsg.userName = UserInformationCache.Default.UserName;
             try
             {
-                UdpClient sender = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
-                IPEndPoint endPoint = new IPEndPoint(remoteUser.endPoint.Address, 20713);
-                byte[] bytes = MsgBase.EncodeToSendBytes(connectRequestMsg);
-                sender.Send(bytes, bytes.Length, endPoint);
+                UnicastMsg(connectRequestMsg, remoteUser);
+                hasRecvConnectReply = false;
+                connectRequestTimer = new Timer(LANConnectRequestTimeOut, null, connectTimeOutLimit, Timeout.Infinite);
                 return true;
             }
             catch (Exception ex)
@@ -235,16 +239,31 @@ namespace LittleSheep
             }
         }
 
+        private void LANConnectRequestTimeOut(object state)
+        {
+            if(!hasRecvConnectReply)
+            {
+                DebugKit.MessageBoxShow("申请连接的对方无响应，可以尝试重新发送连接请求。", "提示");
+            }
+
+            if (connectRequestTimer!=null) connectRequestTimer.Dispose();
+        }
+
         public bool LANConnectReply(RemoteUser remoteUser, bool isAgree)
         {
             LANConnectReplyMsg connectReplyMsg = new LANConnectReplyMsg();
+            connectReplyMsg.userName = UserInformationCache.Default.UserName;
             connectReplyMsg.permission = isAgree;
             try
             {
-                UdpClient sender = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
-                IPEndPoint endPoint = new IPEndPoint(remoteUser.endPoint.Address, 20713);
-                byte[] bytes = MsgBase.EncodeToSendBytes(connectReplyMsg);
-                sender.Send(bytes, bytes.Length, endPoint);
+                UnicastMsg(connectReplyMsg, remoteUser);
+
+                if(isAgree)
+                {
+                    ConnectionManager.Instance.remoteUser = remoteUser;
+                    ConnectionManager.Instance.msgHandler.FireEvent(NetEvent.LANAcceptConnectRequest, null);
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -266,8 +285,9 @@ namespace LittleSheep
         void OnRecvLANProbeRequestMsg(MsgBase msg, object[] args)
         {
             //如果对局域网开放，则需要给对方回复
-
             if (OpenToLan == false) return;
+            //如果已经连结到目标，则不再回复
+            if (ConnectionManager.Instance.HasConnected) return;
 
             //LANProbeRequestMsg probeRequestMsg = (LANProbeRequestMsg)msg;
             LANProbeReplyMsg probeReplyMsg = new LANProbeReplyMsg();
@@ -299,6 +319,14 @@ namespace LittleSheep
             LANProbeReplyMsg probeReplyMsg = (LANProbeReplyMsg)msg;
             IPEndPoint endPoint = (IPEndPoint)args[0];
             RemoteUser newUser = new RemoteUser(probeReplyMsg.userName, endPoint);
+            //if(locateUsers.Contains(newUser))
+            if (probeReplyMsg.userName == UserInformationCache.Default.UserName) 
+            {
+                //找到自己了属于是
+                DebugKit.Log("Find yourself:" + newUser.ToString());
+                return;
+            }
+
             if (!remoteUsers.Contains(newUser))
             {
                 remoteUsers.Add(newUser);
@@ -312,10 +340,10 @@ namespace LittleSheep
         /// </summary>
         /// <param name="msg"></param>
         /// <param name="args"></param>
-        void OnRecvLANConnectRequestMsg(MsgBase msg, object[] args)
-        {
-            //收到了连接请求时，需要给对方一个回复：是否同意连接
-        }
+        //void OnRecvLANConnectRequestMsg(MsgBase msg, object[] args)
+        //{
+        //    //收到了连接请求时，需要给对方一个回复：是否同意连接
+        //}
 
         /// <summary>
         /// 收到连接请求回复报文时
@@ -325,7 +353,16 @@ namespace LittleSheep
         void OnRecvLANConnectReplyMsg(MsgBase msg, object[] args)
         {
             LANConnectReplyMsg connectReplyMsg = (LANConnectReplyMsg)msg;
-            DebugKit.Log("Recv LANConnectReplyMsg with result:" + connectReplyMsg.permission.ToString());
+            //DebugKit.Log("Recv LANConnectReplyMsg with result:" + connectReplyMsg.permission.ToString());
+            hasRecvConnectReply = true;
+
+            //如果对方同意，便需要开始连接
+            if (connectReplyMsg.permission == true)
+            {
+                ConnectionManager.Instance.remoteUser = new RemoteUser(connectReplyMsg.userName, (IPEndPoint)args[0]);
+                ConnectionManager.Instance.msgHandler.FireEvent(NetEvent.LANRecvAcceptConnectRequest, null);
+            }
+            else DebugKit.MessageBoxShow("对方拒绝了你的连接请求", "太逊了");
         }
         #endregion
     }

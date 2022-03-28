@@ -12,9 +12,26 @@ namespace LittleSheep
     public enum NetEvent
     {
         ConnectSucc = 1,
-        ConnectFail = 2,
-        Close = 3,
-        LANRemoteUserListReady = 4
+        ConnectFail,
+        Close,
+
+        //远程用户列表准备好了
+        LANRemoteUserListReady = 10,
+        //本机同意了远程用户的连接请求
+        LANAcceptConnectRequest,
+        //远程主机发来了同意本机连接请求的消息
+        LANRecvAcceptConnectRequest,
+        //远程主机关闭了连接
+        LANRemoteUserLostConnection,
+
+        //开始传输文件
+        FileSendStart = 20,
+        //开始接收文件
+        FileRecvStart,
+        //发送文件完成
+        FileSendFinish,
+        //接收文件完成
+        FileRecvFinish
     }
     /// <summary>
     /// 网络模块事件注册管理
@@ -157,7 +174,7 @@ namespace LittleSheep
         /// </summary>
         /// <param name="netEvent">发生的网络事件</param>
         /// <param name="err">给监听者们发送的传参</param>
-        public void FireEvent(NetEvent netEvent, string err)
+        public void FireEvent(NetEvent netEvent, string err = null)
         {
             if (eventListeners.ContainsKey(netEvent))
             {
