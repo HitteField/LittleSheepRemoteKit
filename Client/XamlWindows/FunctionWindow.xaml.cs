@@ -41,7 +41,7 @@ namespace LittleSheep.XamlWindows
         {
             if(TabItem1.IsSelected)     //视频页被选择了
             {
-
+                
             }
             else if(TabItem2.IsSelected)    //文件传输页被选择了
             {
