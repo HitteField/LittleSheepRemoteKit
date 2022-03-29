@@ -26,6 +26,7 @@ namespace LittleSheep
 
             ConnectionManager.Instance.Init();
             LANConnector.Instance.Init();
+            CompressKit.InitSevenZipCompress();
         }
 
         public void GlobalDestruct()

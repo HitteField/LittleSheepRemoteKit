@@ -40,15 +40,7 @@ namespace LittleSheep
         /// <param name="remoteUser"></param>
         /// <returns>单播成功与否</returns>
         bool UnicastMsg(MsgBase msg, RemoteUser remoteUser);
-        /// <summary>
-        /// 收到广播消息
-        /// </summary>
-        /// <param name="ar"></param>
-        void BroadcastReceive();
-        /// <summary>
-        /// 收到单播消息
-        /// </summary>
-        void UnicastReceive();
+        
 
         #region 具体连接步骤
         /// <summary>

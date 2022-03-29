@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,18 +22,29 @@ namespace LittleSheep.XamlWindows
     public partial class FunctionWindow : Window
     {
         public DuringFileTransfer fileTransferWindow = null;
-        MediaPlayer mediaPlayer = null;
+
         public FunctionWindow()
         {
             InitializeComponent();
 
             LANConnector.Instance.msgHandler.AddMsgListener("ChattingMsg", OnRecvChattingMsg);
+            LANConnector.Instance.msgHandler.AddMsgListener("FileTransferStopMsg", OnRecvFileTransferStopMsg);
             ConnectionManager.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserLostConnection, OnLostConnection);
             ConnectionManager.Instance.msgHandler.AddEventListener(NetEvent.FileSendFinish, OnFileSendFinish);
             ConnectionManager.Instance.msgHandler.AddEventListener(NetEvent.FileRecvFinish, OnFileRecvFinish);
 
             FilePageTips.Text = $"当前连接的设备为{ConnectionManager.Instance.remoteUser}";
             ChattingDisplayer.Document.Blocks.Clear();
+        }
+
+        /// <summary>
+        /// 获取显示图片的Image控件
+        /// </summary>
+        /// <returns></returns>
+        public Image GetDisplayerImage()
+        {
+            
+            return Displayer;
         }
 
         //-------------------------------聊天内容------------------------------------------
@@ -180,8 +192,17 @@ namespace LittleSheep.XamlWindows
         /// <param name="e"></param>
         private void SendFileBtn_Click(object sender, RoutedEventArgs e)
         {
+            UserInformation.Instance.sendFilePath = ChooseFilePathString.Text;
+
+            if(!File.Exists(ChooseFilePathString.Text))
+            {
+                DebugKit.MessageBoxShow("文件不存在！", "提示");
+                return;
+            }
+
             string[] parts = ChooseFilePathString.Text.Split('\\');
             string simpleFileName = parts.Last();
+            ConnectionManager.Instance.tempFileName = simpleFileName;
             long fileTrueLength = FileOperationKit.GetFileLength(ChooseFilePathString.Text);
             string fileLength = FileOperationKit.ConvertLength(fileTrueLength);
             ConnectionManager.Instance.FileSendRequest(simpleFileName, fileLength, fileTrueLength);
@@ -203,6 +224,16 @@ namespace LittleSheep.XamlWindows
         private void OnFileRecvFinish(string err)
         {
             ChattingDisplayerNewMsg(DateTime.Now.ToString("HH:mm:ss") + $" 接收文件成功", Colors.Blue);
+        }
+
+        /// <summary>
+        /// 被强制关闭传输文件
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="args"></param>
+        public void OnRecvFileTransferStopMsg(MsgBase msg,object[] args)
+        {
+            ChattingDisplayerNewMsg(DateTime.Now.ToString("HH:mm:ss") + $" 文件传输已被取消", Colors.Blue);
         }
 
         //----------------------------------------------------------------------------------

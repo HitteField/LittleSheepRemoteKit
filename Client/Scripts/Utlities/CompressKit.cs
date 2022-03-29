@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using ICSharpCode.SharpZipLib.Zip;
+using SevenZip;
 
 namespace LittleSheep
 {
@@ -116,5 +117,123 @@ namespace LittleSheep
             }
             return result;
         }
+
+        static bool hasInit = false;
+        public static void InitSevenZipCompress()
+        {
+            if (hasInit) return;
+            // 指定Dll路径
+            SevenZipBase.SetLibraryPath(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, Environment.Is64BitProcess ? "7z64.dll" : "7z.dll"));
+            hasInit = true;
+        }
+
+        /// <summary>
+        /// 压缩字符串
+        /// </summary>
+        /// <param name="input">源字符串</param>
+        /// <returns>压缩后字节数组</returns>
+        public static byte[] SevenZipCompress(byte[] input)
+        {
+            if(!hasInit) InitSevenZipCompress();
+            byte[] compressed = null;
+            SevenZipCompressor compressor = new SevenZipCompressor();
+            compressor.CompressionMethod = SevenZip.CompressionMethod.Ppmd;
+            compressor.CompressionLevel = CompressionLevel.High;
+            using (MemoryStream msin = new MemoryStream(input))
+            {
+                using (MemoryStream msout = new MemoryStream())
+                {
+                    compressor.CompressStream(msin, msout);
+
+                    msout.Position = 0;
+                    compressed = new byte[msout.Length];
+                    msout.Read(compressed, 0, compressed.Length);
+                }
+            }
+            return compressed;
+        }
+
+        /// <summary>
+        /// 解压字节数组
+        /// </summary>
+        /// <param name="input">源字节数组</param>
+        /// <returns>解压后字符串</returns>
+        public static byte[] SevenZipDecompress(byte[] input)
+        {
+            if (!hasInit) InitSevenZipCompress();
+            byte[] uncompressedbuffer = null;
+            using (MemoryStream msin = new MemoryStream())
+            {
+                msin.Write(input, 0, input.Length);
+                uncompressedbuffer = new byte[input.Length];
+                msin.Position = 0;
+                using (SevenZipExtractor extractor = new SevenZipExtractor(msin))
+                {
+                    using (MemoryStream msout = new MemoryStream())
+                    {
+                        extractor.ExtractFile(0, msout);
+                        msout.Position = 0;
+                        uncompressedbuffer = new byte[msout.Length];
+                        msout.Read(uncompressedbuffer, 0, uncompressedbuffer.Length);
+                    }
+                }
+            }
+            return uncompressedbuffer;
+        }
+
+        //压缩字节
+        //1.创建压缩的数据流 
+        //2.设定compressStream为存放被压缩的文件流,并设定为压缩模式
+        //3.将需要压缩的字节写到被压缩的文件流
+        public static byte[] GZipCompress(byte[] bytes)
+        {
+            using (MemoryStream compressStream = new MemoryStream())
+            {
+                using (var zipStream = new System.IO.Compression.GZipStream(compressStream, System.IO.Compression.CompressionMode.Compress))
+                    zipStream.Write(bytes, 0, bytes.Length);
+                return compressStream.ToArray();
+            }
+        }
+        //解压缩字节
+        //1.创建被压缩的数据流
+        //2.创建zipStream对象，并传入解压的文件流
+        //3.创建目标流
+        //4.zipStream拷贝到目标流
+        //5.返回目标流输出字节
+        public static byte[] GZipDecompress(byte[] bytes)
+        {
+            using (var compressStream = new MemoryStream(bytes))
+            {
+                using (var zipStream = new System.IO.Compression.GZipStream(compressStream, System.IO.Compression.CompressionMode.Decompress))
+                {
+                    using (var resultStream = new MemoryStream())
+                    {
+                        zipStream.CopyTo(resultStream);
+                        return resultStream.ToArray();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// GZip + 7Zip 压缩
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static byte[] GZipSevenZipCompress(byte[] bytes)
+        {
+            return SevenZipCompress(GZipCompress(bytes));
+        }
+
+        /// <summary>
+        /// GZip + 7Zip 解压
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static byte[] GZipSevenZipDecompress(byte[] bytes)
+        {
+            return SevenZipDecompress(GZipDecompress(bytes));
+        }
+        
     }
 }

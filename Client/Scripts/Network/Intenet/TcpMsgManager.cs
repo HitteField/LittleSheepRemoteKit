@@ -4,65 +4,111 @@ using System.Linq;
 using System;
 using System.Net.Sockets;
 using System.Net;
+using System.Threading;
 
 namespace LittleSheep
 {
-    public class NetManager
+    /// <summary>
+    /// 处理TCP连接专门用于接收Msg的管理器
+    /// </summary>
+    public class TcpMsgManager
     {
 
-        //套接字
-        static Socket socket;
+        //对话套接字
+        Socket clientfd;
         //接收缓冲区
-        static ByteArray readBuff;
+        ByteArray readBuff;
         //写入队列
-        static Queue<ByteArray> writeQueue;
+        Queue<ByteArray> writeQueue;
         //网络事件管理器
-        static NetMsgHandler msgHandler = new NetMsgHandler();
+        //NetMsgHandler msgHandler = new NetMsgHandler();
+        //本机是否是接收端
+        bool isServer = false;
+        //此连接使用的端口
+        int port = -1;
+
+        //-------------------------------事件---------------------------------
+
+        /// <summary>
+        /// 事件-连接成功
+        /// </summary>
+        public Action<string> OnConnectSucc;
+        /// <summary>
+        /// 事件-连接失败
+        /// </summary>
+        public Action<string> OnConnectFail;
+        /// <summary>
+        /// 事件-连接关闭
+        /// </summary>
+        public Action<string> OnConnectClose;
+
+        //--------------------------------------------------------------------
         
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="port"></param>
+        public TcpMsgManager(int port)
+        {
+            this.port = port;
+        }
 
         /// <summary>
         /// 需要高频更新的一些内容
         /// 需要在某个while(true)里调用
         /// </summary>
-        public static void Update()
+        public void Update()
         {
-            if (socket == null || !socket.Connected) return;
-            MsgUpdate();            //消息处理
+            if (clientfd == null || !clientfd.Connected) return;
+            //MsgUpdate();            //消息处理
             PingUpdate();           //心跳
         }
 
-        //--------------------------------连接服务器--------------------------------------
+        //--------------------------------连接--------------------------------------
 
         /// <summary>
         /// 是否正在连接
         /// </summary>
-        static bool isConnecting = false;
+        bool isConnecting = false;
         /// <summary>
         /// 是否正在关闭
         /// </summary>
-        static bool isClosing = false;
+        bool isClosing = false;
+        /// <summary>
+        /// 是否已连接上
+        /// </summary>
+        public bool isConnected => clientfd.Connected;
+        /// <summary>
+        /// Accept线程
+        /// </summary>
+        Thread acceptThread = null;
 
         /// <summary>
         /// 初始化变量
         /// </summary>
-        private static void InitState()
+        private void InitState()
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);   //初始化套接字
+            if(!isServer)
+            {
+                clientfd = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);   //初始化套接字                                 
+
+                lastPingTime = TimeKit.GetTimeStamp();       //初始化心跳PING
+                lastPongTime = TimeKit.GetTimeStamp();       //初始化心跳PONG
+
+                //监听PONG协议（心跳机制）
+                /*if (!msgHandler.HasMsgListener("MsgPong"))
+                {
+                    msgHandler.AddMsgListener("MsgPong", OnMsgPong);
+                }*/
+            }
+
             readBuff = new ByteArray();                                             //初始化读缓冲区
             writeQueue = new Queue<ByteArray>();                                    //初始化写入队列
-            msgList = new List<MsgBase>();                                          //初始化消息列表
-
-            lastPingTime = TimeKit.GetTimeStamp();       //初始化心跳PING
-            lastPongTime = TimeKit.GetTimeStamp();       //初始化心跳PONG
+            //msgList = new List<MsgBase>();                                          //初始化消息列表
+            msgQueue = new Queue<MsgBase>();
             msgCount = 0;                   //初始时消息列表当然为空
             isConnecting = false;           //初始化的时候还没开始连接
             isClosing = false;              //当然也没关闭
-
-            //监听PONG协议（心跳机制）
-            if (!msgHandler.HasMsgListener("MsgPong"))
-            {
-                msgHandler.AddMsgListener("MsgPong", OnMsgPong);
-            }
         }
 
         /// <summary>
@@ -75,24 +121,81 @@ namespace LittleSheep
         }
 
         /// <summary>
+        /// 接收其他客户端的连接请求
+        /// </summary>
+        /// <param name="remoteIp">远端客户端的IP</param>
+        public void Accept(string remoteIp)
+        {
+            isUsePing = false;
+            isServer = true;
+            InitState();
+            if (acceptThread != null) 
+            {
+                if (acceptThread.IsAlive) acceptThread.Abort();
+                acceptThread = null;
+            }
+            acceptThread = new Thread(new ParameterizedThreadStart(AcceptThread));
+            acceptThread.Start(remoteIp);
+        }
+
+        private void AcceptThread(object remoteIp)
+        {
+            isConnecting = true;
+            try
+            {
+                Socket listenfd = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                IPEndPoint ipEp = new IPEndPoint(IPAddress.Any, port);
+                listenfd.Bind(ipEp);
+                listenfd.Listen(1);
+
+               while(true)
+               {
+                    clientfd = listenfd.Accept();
+                    if (((IPEndPoint)clientfd.RemoteEndPoint).Address.ToString() != (string)remoteIp)
+                    {
+                        clientfd.Close();
+                        clientfd.Dispose();
+                    }
+                    else break;
+               }
+                
+                clientfd.NoDelay = true;
+
+                DebugKit.Log($"TcpMsgManager has accepted remoteUser{(string)remoteIp}'s connection");
+                //msgHandler.FireEvent(NetEvent.ConnectSucc, string.Empty);
+                OnConnectSucc?.Invoke(string.Empty);
+                isConnecting = false;
+                clientfd.BeginReceive(readBuff.bytes, readBuff.writeIdx, readBuff.Remain, 0, ReceiveCallback, clientfd);
+            }
+            catch (Exception ex)
+            {
+                DebugKit.Error($"[TcpMsgManager.AcceptThread]{ex.Message}");
+                //msgHandler.FireEvent(NetEvent.ConnectFail, ex.ToString());     
+                OnConnectFail?.Invoke(ex.ToString());
+                isConnecting = false;
+            }
+        }
+
+        /// <summary>
         /// 连接服务器
         /// </summary>
         /// <param name="connectMethod">连接方式</param>
-        /// <param name="str">连接字符串</param>
-        /// <param name="port">端口</param>
-        public static void Connect(ConnectMethod connectMethod, string str, int port)
+        /// <param name="targetHoseName">连接字符串</param>
+        /// <param name="isUsePing">是否使用心跳包</param>
+        public void Connect(ConnectMethod connectMethod, string targetHoseName, bool isUsePing)
         {
+            isServer = false;
             string ip = "";
             if (connectMethod == ConnectMethod.IPaddress)
             {
-                ip = str;
+                ip = targetHoseName;
             }
             else if (connectMethod == ConnectMethod.DNS)
             {
-                ip = Dns.GetHostAddresses(str)[0].ToString();
+                ip = Dns.GetHostAddresses(targetHoseName)[0].ToString();
             }
             //状态判断
-            if (socket != null && socket.Connected)
+            if (clientfd != null && clientfd.Connected)
             {
                 DebugKit.Warning("Conect fail, already connected.");
                 return;
@@ -105,20 +208,21 @@ namespace LittleSheep
             //初始化成员
             InitState();
             //不启用Nagle算法
-            socket.NoDelay = true;
-
+            clientfd.NoDelay = true;
+            this.isUsePing = isUsePing;
             isConnecting = true;
-            socket.BeginConnect(ip, port, ConnectCallback, socket);
+            clientfd.BeginConnect(ip, port, ConnectCallback, clientfd);
         }
 
-        private static void ConnectCallback(IAsyncResult ar)
+        private void ConnectCallback(IAsyncResult ar)
         {
             try
             {
                 Socket socket = (Socket)ar.AsyncState;
                 socket.EndConnect(ar);
                 DebugKit.Log("Socket Connect Succ.");
-                msgHandler.FireEvent(NetEvent.ConnectSucc, string.Empty);      //分发“连接成功”事件
+                //msgHandler.FireEvent(NetEvent.ConnectSucc, string.Empty);      //分发“连接成功”事件
+                OnConnectSucc?.Invoke(string.Empty);
                 isConnecting = false;                               //连接结束
                                                                     //连接完成，开始接收消息
                 socket.BeginReceive(readBuff.bytes, readBuff.writeIdx, readBuff.Remain, 0, ReceiveCallback, socket);
@@ -126,7 +230,8 @@ namespace LittleSheep
             catch (Exception ex)
             {
                 DebugKit.Log("Socket Connect Fail with reason: " + ex.ToString());
-                msgHandler.FireEvent(NetEvent.ConnectFail, ex.ToString());     //分发“连接失败”事件
+                //msgHandler.FireEvent(NetEvent.ConnectFail, ex.ToString());     //分发“连接失败”事件
+                OnConnectFail?.Invoke(ex.ToString());
                 isConnecting = false;                               //连接结束
             }
         }
@@ -134,17 +239,18 @@ namespace LittleSheep
         /// <summary>
         /// 关闭连接
         /// </summary>
-        public static void Close()
+        public void Close()
         {
-            if (socket == null || !socket.Connected) return;
+            if (clientfd == null || !clientfd.Connected) return;
             if (isConnecting) return;
             //如果写入队列还有内容，就延迟关闭，设置isClosing为true意为正在关闭中
             //让发送事件的回调函数去处理关闭连接
             if (writeQueue.Count > 0) isClosing = true;
             else
             {
-                socket.Close();
-                msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                clientfd.Close();
+                //msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                OnConnectClose?.Invoke(string.Empty);
             }
 
         }
@@ -152,15 +258,15 @@ namespace LittleSheep
         /// <summary>
         /// 强制关闭连接
         /// </summary>
-        public static void ForceShutdown()
+        public void ForceShutdown()
         {
-            if (socket == null || !socket.Connected) return;
+            if (clientfd == null || !clientfd.Connected) return;
             if (isConnecting) return;
             lock (writeQueue)
             {
                 writeQueue.Clear();
             }
-            socket.Close();
+            clientfd.Close();
 
         }
 
@@ -170,9 +276,9 @@ namespace LittleSheep
         /// 发送一个消息
         /// </summary>
         /// <param name="msg">要发送的消息</param>
-        public static void Send(MsgBase msg)
+        public void Send(MsgBase msg)
         {
-            if (socket == null || !socket.Connected) return;
+            if (clientfd == null || !clientfd.Connected) return;
             if (isConnecting) return;
             if (isClosing) return;
 
@@ -190,11 +296,11 @@ namespace LittleSheep
 
             if (count == 1)          //count大于1的时候会在回调函数中递归处理
             {
-                socket.BeginSend(sendBytes, 0, sendBytes.Length, 0, SendCallback, socket);
+                clientfd.BeginSend(sendBytes, 0, sendBytes.Length, 0, SendCallback, clientfd);
             }
         }
 
-        private static void SendCallback(IAsyncResult ar)
+        private void SendCallback(IAsyncResult ar)
         {
             Socket socket = (Socket)ar.AsyncState;
             if (socket == null || !socket.Connected) return;
@@ -225,7 +331,8 @@ namespace LittleSheep
             else if (isClosing)                  //全都发完了后康康是否正在关闭
             {
                 socket.Close();
-                msgHandler.FireEvent(NetEvent.Close, string.Empty);        //分发事件
+                //msgHandler.FireEvent(NetEvent.Close, string.Empty);        //分发事件
+                OnConnectClose?.Invoke(string.Empty);
                 isClosing = false;
             }
 
@@ -237,17 +344,18 @@ namespace LittleSheep
         /// <summary>
         /// 消息列表
         /// </summary>
-        static List<MsgBase> msgList = new List<MsgBase>();
+        //List<MsgBase> msgList = new List<MsgBase>();
+        Queue<MsgBase> msgQueue = new Queue<MsgBase>();
         /// <summary>
         /// 消息列表长度
         /// </summary>
-        static int msgCount = 0;
+        int msgCount = 0;
         /// <summary>
         /// 每一次Update处理的消息量最大值
         /// </summary>
-        readonly static int MAX_MESSAGE_FIRE = 10;
+        readonly int MAX_MESSAGE_FIRE = 10;
 
-        private static void ReceiveCallback(IAsyncResult ar)
+        private void ReceiveCallback(IAsyncResult ar)
         {
             try
             {
@@ -272,7 +380,8 @@ namespace LittleSheep
             }
             catch (Exception ex)
             {
-                msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                //msgHandler.FireEvent(NetEvent.Close, string.Empty);            //分发“关闭连接”事件
+                OnConnectClose?.Invoke(string.Empty);
                 DebugKit.Warning("Socket Receive Fail with reason: " + ex.ToString());
             }
         }
@@ -280,7 +389,7 @@ namespace LittleSheep
         /// <summary>
         /// 读取并解析收到的消息，将消息放入消息列表中
         /// </summary>
-        public static void OnReceiveData()
+        private void OnReceiveData()
         {
             if (readBuff.Length <= 2) return;
 
@@ -308,9 +417,9 @@ namespace LittleSheep
             readBuff.CheckAndMoveBytes();
 
             //添加到消息队列
-            lock (msgList)
+            lock (msgQueue)
             {
-                msgList.Add(msgBase);
+                msgQueue.Enqueue(msgBase);
             }
             msgCount++;
 
@@ -319,11 +428,27 @@ namespace LittleSheep
                 OnReceiveData();
         }
 
-        public static void MsgUpdate()
+        /// <summary>
+        /// 获取一个Msg，如果没有Msg就会返回空
+        /// </summary>
+        /// <returns></returns>
+        public MsgBase GetMsg()
         {
-            if (msgCount == 0) return;
+            if (msgCount == 0) return null;
 
-            for (int i = 0; i < MAX_MESSAGE_FIRE; ++i)         //每次Update需要做最多MAX_MESSAGE_FIRE条消息的处理
+            MsgBase msgBase = null;
+            lock (msgQueue)
+            {
+                if (msgQueue.Count > 0)
+                {
+                    msgBase = msgQueue.Dequeue();
+                    msgCount--;
+                }
+            }
+
+            return msgBase;
+
+            /*for (int i = 0; i < MAX_MESSAGE_FIRE; ++i)         
             {
                 MsgBase msgBase = null;
                 lock (msgList)
@@ -341,7 +466,7 @@ namespace LittleSheep
                     msgHandler.FireMsg(msgBase.protoName, msgBase);
                 }
                 else break;             //没有新的消息了
-            }
+            }*/
         }
 
         //--------------------------------心跳机制--------------------------------------
@@ -349,21 +474,21 @@ namespace LittleSheep
         /// <summary>
         /// 是否启用心跳机制
         /// </summary>
-        public static bool isUsePing = true;
+        public bool isUsePing = true;
         /// <summary>
         /// 心跳间隔时间
         /// </summary>
-        public static int pintInterval = 5;
+        public int pintInterval = 5;
         /// <summary>
         /// 上一次发送PING的时间
         /// </summary>
-        static long lastPingTime = 0;
+        long lastPingTime = 0;
         /// <summary>
         /// 上一次收到PONG的时间
         /// </summary>
-        static long lastPongTime = 0;
+        long lastPongTime = 0;
 
-        private static void PingUpdate()
+        private void PingUpdate()
         {
             if (!isUsePing) return;
 
@@ -380,7 +505,7 @@ namespace LittleSheep
             }
         }
 
-        private static void OnMsgPong(MsgBase msgBase, object[] args)
+        private void OnMsgPong(MsgBase msgBase, object[] args)
         {
             lastPongTime = TimeKit.GetTimeStamp();
         }

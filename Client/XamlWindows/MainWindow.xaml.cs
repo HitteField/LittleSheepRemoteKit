@@ -35,8 +35,8 @@ namespace LittleSheep.XamlWindows
 
             userNameString.Text = UserInformationCache.Default.UserName;
             LANConnector.Instance.msgHandler.AddMsgListener("LANConnectRequestMsg", OnRecvLANConnectRequestMsg);
-            LANConnector.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserListReady, OnLANRemoteUserListReady);
-     
+            LANConnector.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserListReady, OnLANRemoteUserListReady); 
+
         }
 
         private void StartRecvBoardcast_Click(object sender, RoutedEventArgs e)
@@ -51,6 +51,7 @@ namespace LittleSheep.XamlWindows
                 LANConnector.Instance.OpenToLan = false;
                 startRecvBoardcastButton.Content = "开启接收广播";
             }
+
         }
 
         private void sendBoardcast_Click(object sender, RoutedEventArgs e)

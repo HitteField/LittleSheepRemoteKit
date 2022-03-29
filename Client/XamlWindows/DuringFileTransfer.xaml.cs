@@ -19,15 +19,19 @@ namespace LittleSheep.XamlWindows
     /// </summary>
     public partial class DuringFileTransfer : Window
     {
+        bool hasFinished = false;
         public DuringFileTransfer()
         {
             InitializeComponent();
 
-            ConnectionManager.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserLostConnection, OnLostConnection);
+            ConnectionManager.Instance.msgHandler.AddEventListener(NetEvent.LANRemoteUserLostConnection, CloseThisWindow);
+            ConnectionManager.Instance.msgHandler.AddEventListener(NetEvent.FileSendFinish, CloseThisWindow);
+            ConnectionManager.Instance.msgHandler.AddEventListener(NetEvent.FileRecvFinish, CloseThisWindow);
         }
 
-        private void OnLostConnection(string err)
+        private void CloseThisWindow(string err)
         {
+            hasFinished = true;
             App.Current.Dispatcher.Invoke(new Action(delegate
             {
                 Close();
@@ -37,6 +41,14 @@ namespace LittleSheep.XamlWindows
         private void Window_Closed(object sender, EventArgs e)
         {
 
+            ConnectionManager.Instance.msgHandler.RemoveEventListener(NetEvent.LANRemoteUserLostConnection, CloseThisWindow);
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (hasFinished) return;
+            DebugKit.MessageBoxShow("请不要在传输过程中关闭窗口", "一个不想解决Bug的临时解决办法", MessageBoxButton.OK, MessageBoxImage.Warning);
+            e.Cancel = true;
         }
     }
 }

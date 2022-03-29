@@ -26,6 +26,14 @@ namespace LittleSheep
         public FileSendReplyMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
         public bool permission = false;
     }
+    /// <summary>
+    /// 停止发送文件
+    /// </summary>
+    public class FileTransferStopMsg:MsgBase
+    {
+        public FileTransferStopMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
+    }
+
 
     /// <summary>
     /// 主动关闭报文
