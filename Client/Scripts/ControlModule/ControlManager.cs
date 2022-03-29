@@ -1,5 +1,5 @@
 ﻿using System;
-using LittleSheep;
+using LittleSheep.XamlWindows;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -1701,6 +1701,7 @@ namespace LittleSheep.ControlModule
                         mouseEventf = (UInt16)MOUSEEVENTF.MOVE;
                         x = MyMouseHookStruct.pt.x;
                         y = MyMouseHookStruct.pt.y;
+                        
                         break;
                     case MOUSEEVENT.WM_RBUTTONDOWN:
                         // 鼠标右键按下
@@ -1847,13 +1848,14 @@ namespace LittleSheep.ControlModule
                 return true;
             }
         }
-        #endregion
+
         /// <summary>
-        /// 返回是否正在监听键鼠操作
+        /// 返回是否正在监听
         /// </summary>
         /// <returns></returns>
         public bool IsWorking() {
             return mousehook.HasHook() && keybdhook.HasHook();
         }
+        #endregion
     }
 }
