@@ -43,6 +43,8 @@ namespace LittleSheep
         /// </summary>
         public RemoteUser remoteUser { get; set; }
 
+        private TcpMsgManager tcpMsgManager = new TcpMsgManager(20712);
+
         /// <summary>
         /// 是否已经连接上
         /// </summary>
@@ -70,11 +72,16 @@ namespace LittleSheep
         /// </summary>
         public void Init()
         {
-            lanConnectorInstance.msgHandler.AddMsgListener("ShutConnectionMsg", OnRecvShutConnectionMsg);
+            //lanConnectorInstance.msgHandler.AddMsgListener("ShutConnectionMsg", OnRecvShutConnectionMsg);
+            msgHandler.AddMsgListener("ShutConnectionMsg", OnRecvShutConnectionMsg);
+            tcpMsgManager.OnConnectFail += OnConnectFail;
 
             InitFileModule();
         }
 
+        /// <summary>
+        /// 重置（在断开连接后）
+        /// </summary>
         public void Reset()
         {
             hasConnected = false;
@@ -84,31 +91,146 @@ namespace LittleSheep
             isAbortFileTransfer = false;
             isTransfering = false;
 
-            if (sendThread!=null && sendThread.IsAlive) sendThread.Abort();
-            if (recvThread!=null && recvThread.IsAlive) recvThread.Abort();
+            if (tcpUnicastReceiveThread != null && tcpUnicastReceiveThread.IsAlive) tcpUnicastReceiveThread.Abort();
+
+            if (fileModuleListenerThread != null && fileModuleListenerThread.IsAlive) fileModuleListenerThread.Abort();
+            if (fileModuleSendThread!=null && fileModuleSendThread.IsAlive) fileModuleSendThread.Abort();
+            if (fileModuleRecvThread!=null && fileModuleRecvThread.IsAlive) fileModuleRecvThread.Abort();
+
+            window = null;
+            WindowManager.Instance.theWindowDisplayer = null;
         }
 
-        //--------------------------------局域网报文---------------------------------
+        //--------------------------------普适消息报文传输---------------------------------
 
-        //主动关闭连接
+        private Thread tcpUnicastReceiveThread = null;
+
+        /// <summary>
+        /// 主动关闭连接
+        /// </summary>
         public void ShutConnection()
         {
             if (!hasConnected) return;
             ShutConnectionMsg msg = new ShutConnectionMsg();
-            lanConnectorInstance.UnicastMsg(msg, remoteUser);
+            //lanConnectorInstance.UnicastMsg(msg, remoteUser);
+            TcpUnicastSendMsg(msg);
             Reset();
         }
 
+        /// <summary>
+        /// 接收单播消息（通过TcpMsgManager）
+        /// </summary>
+        private void TcpUnicastReceiveMsg()
+        {
+            while(true)
+            {
+                MsgBase msg = tcpMsgManager.GetMsg();
+                if (msg != null) 
+                {
+                    msgHandler.FireMsg(msg.protoName, msg);
+                }
+                else Thread.Sleep(100);          //没有消息的时候，仅每100ms检测一次
+            }
+        }
+
+        /// <summary>
+        /// 发送单播消息（通过TcpMsgHandler）
+        /// </summary>
+        /// <param name="msg"></param>
+        private void TcpUnicastSendMsg(MsgBase msg)
+        {
+            tcpMsgManager.Send(msg);
+        }
+
+        /// <summary>
+        /// 收到主动关闭连接报文时
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="obj"></param>
         public void OnRecvShutConnectionMsg(MsgBase msg, object[] obj)
         {
             this.Reset();
             DebugKit.MessageBoxShow("对方已主动断开连接", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-            hasConnected = false;
 
             msgHandler.FireEvent(NetEvent.LANRemoteUserLostConnection);
         }
 
-        //--------------------------------------------------------------------------
+        /// <summary>
+        /// 连接失败时
+        /// </summary>
+        /// <param name="error"></param>
+        public void OnConnectFail(string error)
+        {
+            DebugKit.MessageBoxShow($"连接失败：\n{error}", "提示 ");
+            this.Reset();
+
+            msgHandler.FireEvent(NetEvent.LANRemoteUserLostConnection);
+        }
+
+        /// <summary>
+        /// 本机同意对方的连接请求，此时自己应该启动listener等待对方接下来的TCP连接
+        /// </summary>
+        /// <param name="err"></param>
+        private void OnAcceptConnectRequest(string err)
+        {
+            isRecver = true;
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                window = new XamlWindows.FunctionWindow();
+                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                window.Show();
+
+                WindowManager.Instance.theWindowDisplayer = window.GetDisplayerImage();
+            }));
+
+            //文件传输的TCP流
+            hasConnected = true;
+            fileModuleListenerThread = new Thread(FileListenerAcceptance);
+            fileModuleListenerThread.IsBackground = true;
+            fileModuleListenerThread.Start();
+
+            //消息传输的TCP流
+            tcpMsgManager.Accept(remoteUser.endPoint.Address.ToString());
+            tcpUnicastReceiveThread = new Thread(TcpUnicastReceiveMsg);
+            tcpUnicastReceiveThread.IsBackground = false;
+            tcpUnicastReceiveThread.Start();
+
+        }
+
+        /// <summary>
+        /// 本机收到了对方的同意连接请求，此时自己应该使用Client向对方发起TCP连接请求
+        /// </summary>
+        /// <param name="err"></param>
+        private void OnRecvAcceptConnectRequest(string err)
+        {
+            isSender = true;
+            App.Current.Dispatcher.Invoke(new Action(delegate
+            {
+                window = new XamlWindows.FunctionWindow();
+                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                window.Show();
+
+                WindowManager.Instance.theWindowDisplayer = window.GetDisplayerImage();
+            }));
+            hasConnected = true;
+            try
+            {
+                fileClient = new TcpClient(remoteUser.endPoint.Address.ToString(), 20718);
+
+                tcpMsgManager.Connect(TcpMsgManager.ConnectMethod.IPaddress, remoteUser.endPoint.Address.ToString(), false);
+                tcpUnicastReceiveThread = new Thread(TcpUnicastReceiveMsg);
+                tcpUnicastReceiveThread.IsBackground = false;
+                tcpUnicastReceiveThread.Start();
+            }
+            catch (Exception ex)
+            {
+                DebugKit.Error("[OnRecvAcceptConnectRequest]" + ex.Message);
+                hasConnected = false;
+            }
+
+        }
+
+        //---------------------------------聊天---------------------------------
 
         #region 聊天模块
 
@@ -121,7 +243,8 @@ namespace LittleSheep
             ChattingMsg chattingMsg = new ChattingMsg();
             chattingMsg.sendTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             chattingMsg.content = content;
-            lanConnectorInstance.UnicastMsg(chattingMsg, remoteUser);
+            //lanConnectorInstance.UnicastMsg(chattingMsg, remoteUser);
+            TcpUnicastSendMsg(chattingMsg);
         }
 
         /// <summary>
@@ -134,7 +257,8 @@ namespace LittleSheep
             ChattingMsg chattingMsg = new ChattingMsg();
             chattingMsg.sendTime = sendTime;
             chattingMsg.content = content;
-            lanConnectorInstance.UnicastMsg(chattingMsg, remoteUser);
+            //lanConnectorInstance.UnicastMsg(chattingMsg, remoteUser);
+            TcpUnicastSendMsg(chattingMsg);
         }
 
         #endregion
@@ -167,6 +291,10 @@ namespace LittleSheep
         /// 上一次收到的文件发送请求里表述的文件真实大小
         /// </summary>
         long tempFileTrueLength = 0;
+        /// <summary>
+        /// 监听连接的线程
+        /// </summary>
+        Thread fileModuleListenerThread = null;
 
         /// <summary>
         /// 初始化文件模块
@@ -180,58 +308,16 @@ namespace LittleSheep
             msgHandler.AddEventListener(NetEvent.FileSendStart, StartSendFile);
             msgHandler.AddEventListener(NetEvent.FileRecvStart, StartRecvFile);
 
-            lanConnectorInstance.msgHandler.AddMsgListener("FileSendRequestMsg", OnRecvFileSendRequestMsg);
-            lanConnectorInstance.msgHandler.AddMsgListener("FileSendReplyMsg", OnRecvFileSendReplyMsg);
-            lanConnectorInstance.msgHandler.AddMsgListener("FileTransferStopMsg", OnRecvFileTransferStopMsg);
+            //lanConnectorInstance.msgHandler.AddMsgListener("FileSendRequestMsg", OnRecvFileSendRequestMsg);
+            msgHandler.AddMsgListener("FileSendRequestMsg", OnRecvFileSendRequestMsg);
+            //lanConnectorInstance.msgHandler.AddMsgListener("FileSendReplyMsg", OnRecvFileSendReplyMsg);
+            msgHandler.AddMsgListener("FileSendReplyMsg", OnRecvFileSendReplyMsg);
+            //lanConnectorInstance.msgHandler.AddMsgListener("FileTransferStopMsg", OnRecvFileTransferStopMsg);
+            msgHandler.AddMsgListener("FileTransferStopMsg", OnRecvFileTransferStopMsg);
 
             fileModuleHasInit = true;
         }
-
-        /// <summary>
-        /// 本机同意对方的连接请求，此时自己应该启动listener等待对方接下来的TCP连接
-        /// </summary>
-        /// <param name="err"></param>
-        private void OnAcceptConnectRequest(string err)
-        {
-            isRecver = true;
-            App.Current.Dispatcher.Invoke(new Action(delegate
-            {
-                window = new XamlWindows.FunctionWindow();
-                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                window.Show();
-            }));
-
-            hasConnected = true;
-            Thread listenerThread = new Thread(FileListenerAcceptance);
-            listenerThread.IsBackground = true;
-            listenerThread.Start();
-        }
-
-        /// <summary>
-        /// 本机收到了对方的同意连接情趣，此时自己应该使用Client向对方发起TCP连接请求
-        /// </summary>
-        /// <param name="err"></param>
-        private void OnRecvAcceptConnectRequest(string err)
-        {
-            isSender = true;
-            App.Current.Dispatcher.Invoke(new Action(delegate
-            {
-                window = new XamlWindows.FunctionWindow();
-                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                window.Show();
-            }));
-            hasConnected = true;
-            try
-            {
-                fileClient = new TcpClient(remoteUser.endPoint.Address.ToString(), 20718);
-            }
-            catch(Exception ex)
-            {
-                DebugKit.Error("[OnRecvAcceptConnectRequest]" + ex.Message);
-                hasConnected = false;
-            }
-            
-        }
+ 
 
         /// <summary>
         /// Listener监听Client的连接请求
@@ -261,8 +347,8 @@ namespace LittleSheep
             }
         }
 
-        Thread recvThread = null;
-        Thread sendThread = null;
+        Thread fileModuleRecvThread = null;
+        Thread fileModuleSendThread = null;
         bool isAbortFileTransfer = false;
         bool isTransfering = false;
         /// <summary>
@@ -277,10 +363,10 @@ namespace LittleSheep
                 return;
             }
 
-            recvThread = new Thread(RecvFileThread);
-            recvThread.IsBackground = true;
-            recvThread.SetApartmentState(ApartmentState.STA);
-            recvThread.Start();
+            fileModuleRecvThread = new Thread(RecvFileThread);
+            fileModuleRecvThread.IsBackground = true;
+            fileModuleRecvThread.SetApartmentState(ApartmentState.STA);
+            fileModuleRecvThread.Start();
         }
 
         /// <summary>
@@ -295,10 +381,10 @@ namespace LittleSheep
                 return;
             }
 
-            sendThread = new Thread(SendFileThread);
-            sendThread.IsBackground = true;
-            sendThread.SetApartmentState(ApartmentState.STA);
-            sendThread.Start();
+            fileModuleSendThread = new Thread(SendFileThread);
+            fileModuleSendThread.IsBackground = true;
+            fileModuleSendThread.SetApartmentState(ApartmentState.STA);
+            fileModuleSendThread.Start();
         }
 
         private void RecvFileThread()
@@ -471,7 +557,8 @@ namespace LittleSheep
             fileSendRequestMsg.fileTrueLength = fileTrueLength;
             try
             {
-                lanConnectorInstance.UnicastMsg(fileSendRequestMsg, remoteUser);
+                //lanConnectorInstance.UnicastMsg(fileSendRequestMsg, remoteUser);
+                TcpUnicastSendMsg(fileSendRequestMsg);
                 hasSendRequest = true;
                 DebugKit.MessageBoxShow("已发送传输请求，请等待对方回复", "提示");
             }
@@ -561,7 +648,8 @@ namespace LittleSheep
             //把报文发出去
             try
             {
-                lanConnectorInstance.UnicastMsg(fileSendReplyMsg, remoteUser);
+                //lanConnectorInstance.UnicastMsg(fileSendReplyMsg, remoteUser);
+                TcpUnicastSendMsg(fileSendReplyMsg);
             }
             catch (Exception ex)
             {
@@ -600,7 +688,8 @@ namespace LittleSheep
             if (!isTransfering) return;
 
             FileTransferStopMsg msg = new FileTransferStopMsg();
-            lanConnectorInstance.UnicastMsg(msg, remoteUser);
+            //lanConnectorInstance.UnicastMsg(msg, remoteUser);
+            TcpUnicastSendMsg(msg);
             window.OnRecvFileTransferStopMsg(msg, null);
         }
 

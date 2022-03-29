@@ -5,7 +5,10 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Controls;
 using System.Threading.Tasks;
+using LittleSheep.XamlWindows;
 
 namespace LittleSheep
 {
@@ -19,6 +22,31 @@ namespace LittleSheep
         private WindowManager() { }
         public static WindowManager Instance { get { return Nested.instance; } }
         #endregion
+
+
+        public System.Windows.Controls.Image theWindowDisplayer = null;
+
+        /// <summary>
+        /// 获取显示器Image控件相对于本地计算机的坐标与大小
+        /// </summary>
+        /// <param name="windowDisplayerRectangle">获取的Rect</param>
+        /// <returns>是否成功获取（在未进入功能页时无法获取）</returns>
+        public bool GetWindowDisplayerRectangle(out Rectangle windowDisplayerRectangle)
+        {
+            if (theWindowDisplayer == null)
+            {
+                windowDisplayerRectangle = new Rectangle();
+                return false;
+            }
+               
+            //获取相对于物理显示器左上角的锚点的坐标
+            System.Windows.Point startPoint = theWindowDisplayer.PointToScreen(new System.Windows.Point(0, 0));
+
+            windowDisplayerRectangle = new Rectangle((int)startPoint.X, (int)startPoint.Y, (int)theWindowDisplayer.ActualWidth, (int)theWindowDisplayer.ActualHeight);
+            return true;
+        }
+
+        //----------------------------------屏幕处理------------------------------------------
 
         const int windowWidth = 1920;
         const int windowHeight = 1080;
@@ -36,10 +64,10 @@ namespace LittleSheep
 
             Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height);
             using(Graphics g = Graphics.FromImage(bitmap)) {
-                g.CopyFromScreen(new Point(bounds.Left, bounds.Top), Point.Empty, bounds.Size, CopyPixelOperation.SourceCopy);
+                g.CopyFromScreen(new System.Drawing.Point(bounds.Left, bounds.Top), System.Drawing.Point.Empty, bounds.Size, CopyPixelOperation.SourceCopy);
             }
 
-            if(size.Item1!=1920 || size.Item2!=1080)
+            if(size.Item1!=windowWidth || size.Item2!=windowHeight)
             {
                 bitmap = ResizeBitmap(bitmap, windowWidth, windowHeight);
             }

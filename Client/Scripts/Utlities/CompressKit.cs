@@ -134,7 +134,7 @@ namespace LittleSheep
         /// <returns>压缩后字节数组</returns>
         public static byte[] SevenZipCompress(byte[] input)
         {
-            InitSevenZipCompress();
+            if(!hasInit) InitSevenZipCompress();
             byte[] compressed = null;
             SevenZipCompressor compressor = new SevenZipCompressor();
             compressor.CompressionMethod = SevenZip.CompressionMethod.Ppmd;
@@ -160,7 +160,7 @@ namespace LittleSheep
         /// <returns>解压后字符串</returns>
         public static byte[] SevenZipDecompress(byte[] input)
         {
-            InitSevenZipCompress();
+            if (!hasInit) InitSevenZipCompress();
             byte[] uncompressedbuffer = null;
             using (MemoryStream msin = new MemoryStream())
             {

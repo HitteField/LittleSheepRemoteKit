@@ -74,6 +74,14 @@ namespace LittleSheep
         /// 是否正在关闭
         /// </summary>
         bool isClosing = false;
+        /// <summary>
+        /// 是否已连接上
+        /// </summary>
+        public bool isConnected => clientfd.Connected;
+        /// <summary>
+        /// Accept线程
+        /// </summary>
+        Thread acceptThread = null;
 
         /// <summary>
         /// 初始化变量
@@ -104,15 +112,6 @@ namespace LittleSheep
         }
 
         /// <summary>
-        /// 设置此TCP连接所用的端口
-        /// </summary>
-        /// <param name="port"></param>
-        public void SetPort(int port)
-        {
-            this.port = port;
-        }
-
-        /// <summary>
         /// 连接方式枚举
         /// </summary>
         public enum ConnectMethod
@@ -130,7 +129,12 @@ namespace LittleSheep
             isUsePing = false;
             isServer = true;
             InitState();
-            Thread acceptThread = new Thread(new ParameterizedThreadStart(AcceptThread));
+            if (acceptThread != null) 
+            {
+                if (acceptThread.IsAlive) acceptThread.Abort();
+                acceptThread = null;
+            }
+            acceptThread = new Thread(new ParameterizedThreadStart(AcceptThread));
             acceptThread.Start(remoteIp);
         }
 
@@ -424,6 +428,10 @@ namespace LittleSheep
                 OnReceiveData();
         }
 
+        /// <summary>
+        /// 获取一个Msg，如果没有Msg就会返回空
+        /// </summary>
+        /// <returns></returns>
         public MsgBase GetMsg()
         {
             if (msgCount == 0) return null;

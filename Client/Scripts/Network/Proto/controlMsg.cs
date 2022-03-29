@@ -9,6 +9,6 @@ namespace LittleSheep
     public class controlMsg : MsgBase
     {
         public controlMsg() { protoName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name; }
-        //TODO 完善控制信号消息的消息内容
+        public byte[] inf = new byte[11];
     }
 }

@@ -22,7 +22,7 @@ namespace LittleSheep.XamlWindows
     public partial class FunctionWindow : Window
     {
         public DuringFileTransfer fileTransferWindow = null;
-        MediaPlayer mediaPlayer = null;
+
         public FunctionWindow()
         {
             InitializeComponent();
@@ -37,13 +37,23 @@ namespace LittleSheep.XamlWindows
             ChattingDisplayer.Document.Blocks.Clear();
         }
 
+        /// <summary>
+        /// 获取显示图片的Image控件
+        /// </summary>
+        /// <returns></returns>
+        public Image GetDisplayerImage()
+        {
+            
+            return Displayer;
+        }
+
         //-------------------------------聊天内容------------------------------------------
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if(TabItem1.IsSelected)     //视频页被选择了
             {
-
+                
             }
             else if(TabItem2.IsSelected)    //文件传输页被选择了
             {
