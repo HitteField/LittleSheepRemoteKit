@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using LittleSheep;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -16,7 +16,7 @@ namespace LittleSheep.ControlModule
             static internal readonly ControlSetter instance = new ControlSetter();
         }
         private ControlSetter() { }
-        public ControlSetter Instance { get { return danli.instance; } }
+        public static ControlSetter Instance { get { return danli.instance; } }
 
         #endregion
 
@@ -1571,7 +1571,6 @@ namespace LittleSheep.ControlModule
 
 
         private int _hook = 0;
-        //public int HookId { get { return _hook; } }
 
         //定义钩子句柄
         //定义钩子类型
@@ -1849,5 +1848,12 @@ namespace LittleSheep.ControlModule
             }
         }
         #endregion
+        /// <summary>
+        /// 返回是否正在监听键鼠操作
+        /// </summary>
+        /// <returns></returns>
+        public bool IsWorking() {
+            return mousehook.HasHook() && keybdhook.HasHook();
+        }
     }
 }
